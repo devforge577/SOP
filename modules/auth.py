@@ -1,6 +1,8 @@
 from database.db import (
-    get_connection, get_db_connection,
-    hash_password, verify_password, is_legacy_hash,
+    get_db_connection,
+    hash_password,
+    verify_password,
+    is_legacy_hash,
     execute_update,
 )
 from typing import Optional, Dict, List, Tuple
@@ -10,6 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 # ── Module-level functions ────────────────────────────────────────────────────
+
 
 def login(username: str, password: str) -> Optional[Dict]:
     """
@@ -51,10 +54,10 @@ def login(username: str, password: str) -> Optional[Dict]:
             logger.info("Migrated legacy hash to bcrypt for user: %s", username)
 
         user = {
-            "user_id":   row["user_id"],
-            "username":  row["username"],
+            "user_id": row["user_id"],
+            "username": row["username"],
             "full_name": row["full_name"],
-            "role":      row["role"],
+            "role": row["role"],
             "is_active": row["is_active"],
         }
         logger.info("Successful login: %s (%s)", username, user["role"])
@@ -95,7 +98,8 @@ def get_all_users(include_inactive: bool = False) -> List[Dict]:
                 )
             else:
                 cursor.execute(
-                    "SELECT user_id, username, full_name, role, is_active, created_at FROM users WHERE is_active = 1 ORDER BY created_at DESC"
+                    "SELECT user_id, username, full_name, role, is_active, created_at"
+                    " FROM users WHERE is_active = 1 ORDER BY created_at DESC"
                 )
             return [dict(row) for row in cursor.fetchall()]
     except Exception as e:
@@ -103,7 +107,9 @@ def get_all_users(include_inactive: bool = False) -> List[Dict]:
         return []
 
 
-def create_user(username: str, password: str, full_name: str, role: str) -> Tuple[bool, str]:
+def create_user(
+    username: str, password: str, full_name: str, role: str
+) -> Tuple[bool, str]:
     """Create a new user. Role must be admin, manager, or cashier."""
     if role not in ("admin", "manager", "cashier"):
         return False, "Invalid role. Must be admin, manager, or cashier."
@@ -130,7 +136,9 @@ def create_user(username: str, password: str, full_name: str, role: str) -> Tupl
         return False, f"Error creating user: {e}"
 
 
-def update_user(user_id: int, full_name: str = None, role: str = None) -> Tuple[bool, str]:
+def update_user(
+    user_id: int, full_name: str = None, role: str = None
+) -> Tuple[bool, str]:
     """Update user information (name and/or role)."""
     updates, params = [], []
     if full_name:
@@ -158,7 +166,9 @@ def update_user(user_id: int, full_name: str = None, role: str = None) -> Tuple[
         return False, f"Error updating user: {e}"
 
 
-def change_password(user_id: int, old_password: str, new_password: str) -> Tuple[bool, str]:
+def change_password(
+    user_id: int, old_password: str, new_password: str
+) -> Tuple[bool, str]:
     """Allow a user to change their own password."""
     if len(new_password) < 8:
         return False, "New password must be at least 8 characters."
@@ -203,7 +213,9 @@ def reset_password(user_id: int, new_password: str) -> Tuple[bool, str]:
 def deactivate_user(user_id: int) -> Tuple[bool, str]:
     """Soft-delete a user account."""
     try:
-        rows = execute_update("UPDATE users SET is_active = 0 WHERE user_id = ?", (user_id,))
+        rows = execute_update(
+            "UPDATE users SET is_active = 0 WHERE user_id = ?", (user_id,)
+        )
         if rows > 0:
             logger.info("User %s deactivated.", user_id)
             return True, "User deactivated successfully."
@@ -216,7 +228,9 @@ def deactivate_user(user_id: int) -> Tuple[bool, str]:
 def activate_user(user_id: int) -> Tuple[bool, str]:
     """Reactivate a user account."""
     try:
-        rows = execute_update("UPDATE users SET is_active = 1 WHERE user_id = ?", (user_id,))
+        rows = execute_update(
+            "UPDATE users SET is_active = 1 WHERE user_id = ?", (user_id,)
+        )
         if rows > 0:
             logger.info("User %s activated.", user_id)
             return True, "User activated successfully."
@@ -234,7 +248,10 @@ def delete_user(user_id: int) -> Tuple[bool, str]:
             cursor.execute("SELECT COUNT(*) FROM sales WHERE user_id = ?", (user_id,))
             sales_count = cursor.fetchone()[0]
             if sales_count > 0:
-                return False, f"Cannot delete user with {sales_count} sales records. Deactivate instead."
+                return (
+                    False,
+                    f"Cannot delete user with {sales_count} sales records. Deactivate instead.",
+                )
             cursor.execute("DELETE FROM users WHERE user_id = ?", (user_id,))
         logger.info("User %s permanently deleted.", user_id)
         return True, "User permanently deleted."
@@ -252,23 +269,26 @@ def has_permission(user_role: str, required_role: str) -> bool:
 def get_role_permissions(role: str) -> Dict[str, bool]:
     """Return the full permission map for a given role."""
     base = {
-        "view_sales":       True,
-        "process_sale":     True,
-        "view_products":    True,
-        "manage_products":  False,
+        "view_sales": True,
+        "process_sale": True,
+        "view_products": True,
+        "manage_products": False,
         "manage_inventory": False,
-        "view_reports":     False,
-        "manage_users":     False,
-        "manage_system":    False,
+        "view_reports": False,
+        "manage_users": False,
+        "manage_system": False,
     }
     if role == "manager":
-        base.update({"manage_products": True, "manage_inventory": True, "view_reports": True})
+        base.update(
+            {"manage_products": True, "manage_inventory": True, "view_reports": True}
+        )
     elif role == "admin":
         base.update({k: True for k in base})
     return base
 
 
 # ── Auth class (session wrapper) ──────────────────────────────────────────────
+
 
 class Auth:
     """Thin session wrapper around the module-level auth functions."""
@@ -303,6 +323,7 @@ class Auth:
 
 if __name__ == "__main__":
     from database.db import initialize_database
+
     initialize_database()
     user = login("admin", "admin123")
     if user:

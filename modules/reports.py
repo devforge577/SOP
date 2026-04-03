@@ -1,5 +1,5 @@
-from database.db import get_connection, execute_query, get_db_connection
-from typing import List, Dict, Optional
+from database.db import get_connection
+from typing import List, Dict
 import logging
 from datetime import datetime, timedelta
 
@@ -35,14 +35,14 @@ def get_daily_summary(date: str = None) -> Dict:
         cursor.execute(query, param)
         row = cursor.fetchone()
         conn.close()
-        
+
         result = dict(row) if row else {}
-        
+
         # Add additional derived fields
         if result:
-            result['net_revenue'] = result['total_revenue'] - result['total_discounts']
-            result['transaction_count'] = result['total_transactions']
-        
+            result["net_revenue"] = result["total_revenue"] - result["total_discounts"]
+            result["transaction_count"] = result["total_transactions"]
+
         return result
     except Exception as e:
         logger.error(f"Error getting daily summary: {e}")
@@ -57,7 +57,8 @@ def get_sales_by_date_range(start_date: str, end_date: str) -> List[Dict]:
     try:
         conn = get_connection()
         cursor = conn.cursor()
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT
                 DATE(sale_date)                AS sale_date,
                 COUNT(*)                       AS total_transactions,
@@ -68,7 +69,9 @@ def get_sales_by_date_range(start_date: str, end_date: str) -> List[Dict]:
             WHERE DATE(sale_date) BETWEEN ? AND ?
             GROUP BY DATE(sale_date)
             ORDER BY DATE(sale_date)
-        """, (start_date, end_date))
+        """,
+            (start_date, end_date),
+        )
         rows = [dict(row) for row in cursor.fetchall()]
         conn.close()
         return rows
@@ -77,8 +80,9 @@ def get_sales_by_date_range(start_date: str, end_date: str) -> List[Dict]:
         return []
 
 
-def get_top_products(limit: int = 10, start_date: str = None,
-                     end_date: str = None) -> List[Dict]:
+def get_top_products(
+    limit: int = 10, start_date: str = None, end_date: str = None
+) -> List[Dict]:
     """
     Returns top-selling products by quantity sold.
     Optionally filter by date range.
@@ -93,7 +97,8 @@ def get_top_products(limit: int = 10, start_date: str = None,
             where = "WHERE DATE(s.sale_date) BETWEEN ? AND ?"
             params = [start_date, end_date]
 
-        cursor.execute(f"""
+        cursor.execute(
+            f"""
             SELECT
                 p.product_id,
                 p.product_name,
@@ -108,15 +113,19 @@ def get_top_products(limit: int = 10, start_date: str = None,
             GROUP BY si.product_id
             ORDER BY units_sold DESC
             LIMIT ?
-        """, params + [limit])
+        """,
+            params + [limit],
+        )
         rows = [dict(row) for row in cursor.fetchall()]
         conn.close()
-        
+
         # Add contribution percentage
-        total_revenue = sum(row['revenue'] for row in rows)
+        total_revenue = sum(row["revenue"] for row in rows)
         for row in rows:
-            row['contribution_percentage'] = (row['revenue'] / total_revenue * 100) if total_revenue > 0 else 0
-        
+            row["contribution_percentage"] = (
+                (row["revenue"] / total_revenue * 100) if total_revenue > 0 else 0
+            )
+
         return rows
     except Exception as e:
         logger.error(f"Error getting top products: {e}")
@@ -130,10 +139,11 @@ def get_low_performing_products(limit: int = 10, days: int = 30) -> List[Dict]:
     try:
         conn = get_connection()
         cursor = conn.cursor()
-        
-        cutoff_date = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%d')
-        
-        cursor.execute("""
+
+        cutoff_date = (datetime.now() - timedelta(days=days)).strftime("%Y-%m-%d")
+
+        cursor.execute(
+            """
             SELECT
                 p.product_id,
                 p.product_name,
@@ -151,8 +161,10 @@ def get_low_performing_products(limit: int = 10, days: int = 30) -> List[Dict]:
             HAVING units_sold = 0 OR units_sold < ?
             ORDER BY units_sold ASC
             LIMIT ?
-        """, (cutoff_date, limit, limit))
-        
+        """,
+            (cutoff_date, limit, limit),
+        )
+
         rows = [dict(row) for row in cursor.fetchall()]
         conn.close()
         return rows
@@ -161,8 +173,9 @@ def get_low_performing_products(limit: int = 10, days: int = 30) -> List[Dict]:
         return []
 
 
-def get_payment_method_breakdown(start_date: str = None,
-                                  end_date: str = None) -> List[Dict]:
+def get_payment_method_breakdown(
+    start_date: str = None, end_date: str = None
+) -> List[Dict]:
     """
     Returns revenue split by payment method for a date range.
     """
@@ -176,7 +189,8 @@ def get_payment_method_breakdown(start_date: str = None,
             where = "WHERE DATE(sale_date) BETWEEN ? AND ?"
             params = [start_date, end_date]
 
-        cursor.execute(f"""
+        cursor.execute(
+            f"""
             SELECT
                 payment_method,
                 COUNT(*)                       AS transactions,
@@ -186,23 +200,26 @@ def get_payment_method_breakdown(start_date: str = None,
             {where}
             GROUP BY payment_method
             ORDER BY revenue DESC
-        """, params)
+        """,
+            params,
+        )
         rows = [dict(row) for row in cursor.fetchall()]
         conn.close()
-        
+
         # Calculate percentage
-        total_revenue = sum(row['revenue'] for row in rows)
+        total_revenue = sum(row["revenue"] for row in rows)
         for row in rows:
-            row['percentage'] = (row['revenue'] / total_revenue * 100) if total_revenue > 0 else 0
-        
+            row["percentage"] = (
+                (row["revenue"] / total_revenue * 100) if total_revenue > 0 else 0
+            )
+
         return rows
     except Exception as e:
         logger.error(f"Error getting payment method breakdown: {e}")
         return []
 
 
-def get_cashier_performance(start_date: str = None,
-                             end_date: str = None) -> List[Dict]:
+def get_cashier_performance(start_date: str = None, end_date: str = None) -> List[Dict]:
     """
     Returns sales totals per cashier for a date range.
     """
@@ -216,7 +233,8 @@ def get_cashier_performance(start_date: str = None,
             where = "AND DATE(s.sale_date) BETWEEN ? AND ?"
             params = [start_date, end_date]
 
-        cursor.execute(f"""
+        cursor.execute(
+            f"""
             SELECT
                 u.user_id,
                 u.full_name                    AS cashier,
@@ -231,17 +249,19 @@ def get_cashier_performance(start_date: str = None,
             WHERE 1=1 {where}
             GROUP BY s.user_id
             ORDER BY revenue DESC
-        """, params)
+        """,
+            params,
+        )
         rows = [dict(row) for row in cursor.fetchall()]
         conn.close()
-        
+
         # Add performance metrics
         for row in rows:
-            if row['transactions'] > 0:
-                row['avg_items_per_sale'] = 'N/A'  # Would need additional query
+            if row["transactions"] > 0:
+                row["avg_items_per_sale"] = "N/A"  # Would need additional query
             else:
-                row['avg_items_per_sale'] = 0
-        
+                row["avg_items_per_sale"] = 0
+
         return rows
     except Exception as e:
         logger.error(f"Error getting cashier performance: {e}")
@@ -256,7 +276,8 @@ def get_inventory_report() -> List[Dict]:
     try:
         conn = get_connection()
         cursor = conn.cursor()
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT
                 p.product_id,
                 p.product_name,
@@ -274,28 +295,29 @@ def get_inventory_report() -> List[Dict]:
             FROM products p
             LEFT JOIN inventory i ON p.product_id = i.product_id
             WHERE p.is_active = 1
-            ORDER BY 
-                CASE 
+            ORDER BY
+                CASE
                     WHEN COALESCE(i.quantity, 0) = 0 THEN 0
                     WHEN COALESCE(i.quantity, 0) <= COALESCE(i.low_stock_alert, 5) THEN 1
                     ELSE 2
                 END,
                 i.quantity ASC
-        """)
+        """
+        )
         rows = [dict(row) for row in cursor.fetchall()]
         conn.close()
-        
+
         # Add summary statistics
         if rows:
             summary = {
-                'total_products': len(rows),
-                'out_of_stock': sum(1 for r in rows if r['status'] == 'Out of stock'),
-                'low_stock': sum(1 for r in rows if r['status'] == 'Low stock'),
-                'healthy_stock': sum(1 for r in rows if r['status'] == 'OK'),
-                'total_inventory_value': sum(r['price'] * r['stock'] for r in rows)
+                "total_products": len(rows),
+                "out_of_stock": sum(1 for r in rows if r["status"] == "Out of stock"),
+                "low_stock": sum(1 for r in rows if r["status"] == "Low stock"),
+                "healthy_stock": sum(1 for r in rows if r["status"] == "OK"),
+                "total_inventory_value": sum(r["price"] * r["stock"] for r in rows),
             }
-            rows.insert(0, {'_summary': summary})
-        
+            rows.insert(0, {"_summary": summary})
+
         return rows
     except Exception as e:
         logger.error(f"Error getting inventory report: {e}")
@@ -307,7 +329,8 @@ def get_recent_transactions(limit: int = 50) -> List[Dict]:
     try:
         conn = get_connection()
         cursor = conn.cursor()
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT
                 s.sale_id,
                 s.sale_date,
@@ -326,7 +349,9 @@ def get_recent_transactions(limit: int = 50) -> List[Dict]:
             GROUP BY s.sale_id
             ORDER BY s.sale_date DESC
             LIMIT ?
-        """, (limit,))
+        """,
+            (limit,),
+        )
         rows = [dict(row) for row in cursor.fetchall()]
         conn.close()
         return rows
@@ -342,14 +367,15 @@ def get_profit_analysis(start_date: str = None, end_date: str = None) -> Dict:
     try:
         conn = get_connection()
         cursor = conn.cursor()
-        
+
         where = ""
         params = []
         if start_date and end_date:
             where = "WHERE DATE(s.sale_date) BETWEEN ? AND ?"
             params = [start_date, end_date]
-        
-        cursor.execute(f"""
+
+        cursor.execute(
+            f"""
             SELECT
                 COUNT(DISTINCT s.sale_id) AS total_transactions,
                 SUM(s.total_amount) AS total_revenue,
@@ -357,16 +383,18 @@ def get_profit_analysis(start_date: str = None, end_date: str = None) -> Dict:
                 SUM(s.tax) AS total_tax,
                 SUM(si.quantity * p.price) AS estimated_cogs,
                 SUM(s.total_amount) - SUM(si.quantity * p.price) AS estimated_gross_profit,
-                (SUM(s.total_amount) - SUM(si.quantity * p.price)) / NULLIF(SUM(s.total_amount), 0) * 100 AS profit_margin_percentage
+                (SUM(s.total_amount) - SUM(si.quantity * p.price)) / NULLIF(SUM(s.total_amount), 0) * 100 AS profit_margin_percentage  # noqa: E501
             FROM sales s
             JOIN sale_items si ON s.sale_id = si.sale_id
             JOIN products p ON si.product_id = p.product_id
             {where}
-        """, params)
-        
+        """,
+            params,
+        )
+
         row = cursor.fetchone()
         conn.close()
-        
+
         return dict(row) if row else {}
     except Exception as e:
         logger.error(f"Error getting profit analysis: {e}")
@@ -381,10 +409,10 @@ def get_hourly_sales_pattern(date: str = None) -> List[Dict]:
     try:
         conn = get_connection()
         cursor = conn.cursor()
-        
+
         date_filter = date or "date('now')"
         param = (date,) if date else ()
-        
+
         query = f"""
             SELECT
                 CAST(strftime('%H', sale_date) AS INTEGER) AS hour,
@@ -412,8 +440,9 @@ def get_customer_loyalty_report() -> List[Dict]:
     try:
         conn = get_connection()
         cursor = conn.cursor()
-        
-        cursor.execute("""
+
+        cursor.execute(
+            """
             SELECT
                 c.customer_id,
                 c.full_name,
@@ -430,22 +459,23 @@ def get_customer_loyalty_report() -> List[Dict]:
             WHERE c.loyalty_points > 0 OR s.sale_id IS NOT NULL
             GROUP BY c.customer_id
             ORDER BY total_spent DESC
-        """)
-        
+        """
+        )
+
         rows = [dict(row) for row in cursor.fetchall()]
         conn.close()
-        
+
         # Add customer tier based on loyalty points
         for row in rows:
-            if row['loyalty_points'] >= 1000:
-                row['tier'] = 'Platinum'
-            elif row['loyalty_points'] >= 500:
-                row['tier'] = 'Gold'
-            elif row['loyalty_points'] >= 100:
-                row['tier'] = 'Silver'
+            if row["loyalty_points"] >= 1000:
+                row["tier"] = "Platinum"
+            elif row["loyalty_points"] >= 500:
+                row["tier"] = "Gold"
+            elif row["loyalty_points"] >= 100:
+                row["tier"] = "Silver"
             else:
-                row['tier'] = 'Bronze'
-        
+                row["tier"] = "Bronze"
+
         return rows
     except Exception as e:
         logger.error(f"Error getting customer loyalty report: {e}")
@@ -457,17 +487,17 @@ def export_report_to_csv(data: List[Dict], filename: str) -> bool:
     Export report data to CSV file.
     """
     import csv
-    
+
     try:
         if not data:
             return False
-        
-        with open(filename, 'w', newline='', encoding='utf-8') as csvfile:
+
+        with open(filename, "w", newline="", encoding="utf-8") as csvfile:
             fieldnames = data[0].keys()
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writeheader()
             writer.writerows(data)
-        
+
         logger.info(f"Report exported to {filename}")
         return True
     except Exception as e:
@@ -481,16 +511,18 @@ if __name__ == "__main__":
     print("Daily Summary:")
     summary = get_daily_summary()
     print(f"  {summary}")
-    
+
     print("\nTop Products:")
     top = get_top_products(5)
     for product in top:
-        print(f"  {product['product_name']}: {product['units_sold']} units - ${product['revenue']:.2f}")
-    
+        print(
+            f"  {product['product_name']}: {product['units_sold']} units - ${product['revenue']:.2f}"
+        )
+
     print("\nInventory Report:")
     inventory = get_inventory_report()
-    if inventory and '_summary' in inventory[0]:
-        summary_data = inventory[0]['_summary']
+    if inventory and "_summary" in inventory[0]:
+        summary_data = inventory[0]["_summary"]
         print(f"  Total Products: {summary_data['total_products']}")
         print(f"  Out of Stock: {summary_data['out_of_stock']}")
         print(f"  Low Stock: {summary_data['low_stock']}")

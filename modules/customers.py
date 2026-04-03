@@ -8,24 +8,29 @@ logger = logging.getLogger(__name__)
 
 # ── CRUD ──────────────────────────────────────────────────────────────────────
 
-def add_customer(full_name: str, phone: str = None,
-                 email: str = None, address: str = None) -> Tuple[bool, str]:
+
+def add_customer(
+    full_name: str, phone: str = None, email: str = None, address: str = None
+) -> Tuple[bool, str]:
     """Register a new customer. Phone must be unique if provided."""
     if not full_name or not full_name.strip():
         return False, "Full name cannot be empty."
 
     full_name = full_name.strip()
-    phone     = phone.strip()   if phone   and phone.strip()   else None
-    email     = email.strip()   if email   and email.strip()   else None
-    address   = address.strip() if address and address.strip() else None
+    phone = phone.strip() if phone and phone.strip() else None
+    email = email.strip() if email and email.strip() else None
+    address = address.strip() if address and address.strip() else None
 
     try:
         with get_db_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT INTO customers (full_name, phone, email, address)
                 VALUES (?, ?, ?, ?)
-            """, (full_name, phone, email, address))
+            """,
+                (full_name, phone, email, address),
+            )
             customer_id = cursor.lastrowid
             logger.info(f"Customer added: {full_name} (ID: {customer_id})")
             return True, f"Customer registered successfully (ID: {customer_id})."
@@ -43,11 +48,14 @@ def get_customer_by_phone(phone: str) -> Optional[Dict]:
     try:
         conn = get_connection()
         cursor = conn.cursor()
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT customer_id, full_name, phone, email, address, loyalty_points, created_at
             FROM customers
             WHERE phone = ?
-        """, (phone.strip(),))
+        """,
+            (phone.strip(),),
+        )
         row = cursor.fetchone()
         conn.close()
         return dict(row) if row else None
@@ -61,11 +69,14 @@ def get_customer_by_id(customer_id: int) -> Optional[Dict]:
     try:
         conn = get_connection()
         cursor = conn.cursor()
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT customer_id, full_name, phone, email, address, loyalty_points, created_at
             FROM customers
             WHERE customer_id = ?
-        """, (customer_id,))
+        """,
+            (customer_id,),
+        )
         row = cursor.fetchone()
         conn.close()
         return dict(row) if row else None
@@ -80,12 +91,15 @@ def search_customers(keyword: str) -> List[Dict]:
         conn = get_connection()
         cursor = conn.cursor()
         like = f"%{keyword.strip()}%"
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT customer_id, full_name, phone, email, loyalty_points
             FROM customers
             WHERE full_name LIKE ? OR phone LIKE ?
             ORDER BY full_name
-        """, (like, like))
+        """,
+            (like, like),
+        )
         rows = [dict(r) for r in cursor.fetchall()]
         conn.close()
         return rows
@@ -99,11 +113,13 @@ def get_all_customers() -> List[Dict]:
     try:
         conn = get_connection()
         cursor = conn.cursor()
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT customer_id, full_name, phone, email, address, loyalty_points, created_at
             FROM customers
             ORDER BY full_name
-        """)
+        """
+        )
         rows = [dict(r) for r in cursor.fetchall()]
         conn.close()
         return rows
@@ -112,9 +128,13 @@ def get_all_customers() -> List[Dict]:
         return []
 
 
-def update_customer(customer_id: int, full_name: str = None,
-                    phone: str = None, email: str = None,
-                    address: str = None) -> Tuple[bool, str]:
+def update_customer(
+    customer_id: int,
+    full_name: str = None,
+    phone: str = None,
+    email: str = None,
+    address: str = None,
+) -> Tuple[bool, str]:
     """Update customer details."""
     updates, params = [], []
 
@@ -142,7 +162,7 @@ def update_customer(customer_id: int, full_name: str = None,
             cursor = conn.cursor()
             cursor.execute(
                 f"UPDATE customers SET {', '.join(updates)} WHERE customer_id = ?",
-                params
+                params,
             )
             if cursor.rowcount == 0:
                 return False, "Customer not found."
@@ -163,7 +183,9 @@ def delete_customer(customer_id: int) -> Tuple[bool, str]:
     try:
         conn = get_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT COUNT(*) FROM sales WHERE customer_id = ?", (customer_id,))
+        cursor.execute(
+            "SELECT COUNT(*) FROM sales WHERE customer_id = ?", (customer_id,)
+        )
         sales_count = cursor.fetchone()[0]
         conn.close()
 
@@ -171,18 +193,25 @@ def delete_customer(customer_id: int) -> Tuple[bool, str]:
             # Anonymise instead of deleting
             with get_db_connection() as conn:
                 cursor = conn.cursor()
-                cursor.execute("""
+                cursor.execute(
+                    """
                     UPDATE customers
                     SET full_name = 'Deleted Customer', phone = NULL,
                         email = NULL, address = NULL
                     WHERE customer_id = ?
-                """, (customer_id,))
-            logger.info(f"Customer {customer_id} anonymised ({sales_count} sales preserved).")
+                """,
+                    (customer_id,),
+                )
+            logger.info(
+                f"Customer {customer_id} anonymised ({sales_count} sales preserved)."
+            )
             return True, "Customer data removed (sales history preserved)."
         else:
             with get_db_connection() as conn:
                 cursor = conn.cursor()
-                cursor.execute("DELETE FROM customers WHERE customer_id = ?", (customer_id,))
+                cursor.execute(
+                    "DELETE FROM customers WHERE customer_id = ?", (customer_id,)
+                )
             logger.info(f"Customer {customer_id} permanently deleted.")
             return True, "Customer permanently deleted."
     except Exception as e:
@@ -194,7 +223,7 @@ def delete_customer(customer_id: int) -> Tuple[bool, str]:
 
 # 1 loyalty point awarded for every 1 GHS spent (rounded down).
 POINTS_PER_GHS = 1
-POINTS_REDEEM_VALUE = 0.01   # 1 point = GHS 0.01 when redeemed
+POINTS_REDEEM_VALUE = 0.01  # 1 point = GHS 0.01 when redeemed
 
 
 def award_loyalty_points(customer_id: int, amount_spent: float) -> int:
@@ -212,11 +241,14 @@ def award_loyalty_points(customer_id: int, amount_spent: float) -> int:
     try:
         with get_db_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("""
+            cursor.execute(
+                """
                 UPDATE customers
                 SET loyalty_points = loyalty_points + ?
                 WHERE customer_id = ?
-            """, (points, customer_id))
+            """,
+                (points, customer_id),
+            )
             if cursor.rowcount == 0:
                 return 0
             logger.info(f"Awarded {points} points to customer {customer_id}")
@@ -226,8 +258,9 @@ def award_loyalty_points(customer_id: int, amount_spent: float) -> int:
         return 0
 
 
-def redeem_loyalty_points(customer_id: int,
-                           points_to_redeem: int) -> Tuple[bool, float, str]:
+def redeem_loyalty_points(
+    customer_id: int, points_to_redeem: int
+) -> Tuple[bool, float, str]:
     """
     Redeem loyalty points as a discount.
     Returns (success, discount_amount_GHS, message).
@@ -239,8 +272,7 @@ def redeem_loyalty_points(customer_id: int,
         conn = get_connection()
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT loyalty_points FROM customers WHERE customer_id = ?",
-            (customer_id,)
+            "SELECT loyalty_points FROM customers WHERE customer_id = ?", (customer_id,)
         )
         row = cursor.fetchone()
         conn.close()
@@ -256,17 +288,24 @@ def redeem_loyalty_points(customer_id: int,
 
         with get_db_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("""
+            cursor.execute(
+                """
                 UPDATE customers
                 SET loyalty_points = loyalty_points - ?
                 WHERE customer_id = ?
-            """, (points_to_redeem, customer_id))
+            """,
+                (points_to_redeem, customer_id),
+            )
 
         logger.info(
             f"Redeemed {points_to_redeem} points (GHS {discount:.2f}) "
             f"for customer {customer_id}"
         )
-        return True, discount, f"Redeemed {points_to_redeem} pts for GHS {discount:.2f} discount."
+        return (
+            True,
+            discount,
+            f"Redeemed {points_to_redeem} pts for GHS {discount:.2f} discount.",
+        )
     except Exception as e:
         logger.error(f"Error redeeming loyalty points: {e}")
         return False, 0.0, f"Error: {str(e)}"
@@ -278,8 +317,7 @@ def get_loyalty_balance(customer_id: int) -> int:
         conn = get_connection()
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT loyalty_points FROM customers WHERE customer_id = ?",
-            (customer_id,)
+            "SELECT loyalty_points FROM customers WHERE customer_id = ?", (customer_id,)
         )
         row = cursor.fetchone()
         conn.close()
@@ -294,7 +332,8 @@ def get_customer_purchase_history(customer_id: int) -> List[Dict]:
     try:
         conn = get_connection()
         cursor = conn.cursor()
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT s.sale_id, s.sale_date, s.total_amount,
                    s.payment_method, s.discount,
                    u.full_name AS cashier,
@@ -305,7 +344,9 @@ def get_customer_purchase_history(customer_id: int) -> List[Dict]:
             WHERE s.customer_id = ?
             GROUP BY s.sale_id
             ORDER BY s.sale_date DESC
-        """, (customer_id,))
+        """,
+            (customer_id,),
+        )
         rows = [dict(r) for r in cursor.fetchall()]
         conn.close()
         return rows

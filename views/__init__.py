@@ -8,9 +8,4 @@ from .cashier_view import CashierView
 from .product_view import ProductView
 from .reports_view import ReportsView
 
-__all__ = [
-    'LoginView',
-    'CashierView',
-    'ProductView',
-    'ReportsView'
-]
+__all__ = ["LoginView", "CashierView", "ProductView", "ReportsView"]

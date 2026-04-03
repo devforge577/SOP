@@ -12,9 +12,9 @@ from .report_service import ReportService
 from .payment_service import PaymentService
 
 __all__ = [
-    'AuthService',
-    'ProductService',
-    'SalesService',
-    'ReportService',
-    'PaymentService',
+    "AuthService",
+    "ProductService",
+    "SalesService",
+    "ReportService",
+    "PaymentService",
 ]

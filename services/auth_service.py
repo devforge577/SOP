@@ -2,11 +2,10 @@
 Authentication Service
 
 Handles user authentication and session management.
-Coordinates between presentation layer and auth module.
 """
 
 from typing import Optional, Dict, Tuple
-from modules.auth import login as auth_login, Auth, get_current_user as get_user_from_db
+from modules.auth import login as auth_login, Auth
 import logging
 
 logger = logging.getLogger(__name__)
@@ -19,69 +18,68 @@ class AuthService:
         self.current_session = None
         self.auth = Auth()
 
-    def authenticate(self, username: str, password: str) -> Tuple[bool, Optional[Dict], str]:
-        """
-        Authenticate user with credentials.
-        
-        Args:
-            username: User's username
-            password: User's password
-            
-        Returns:
-            (success: bool, user_dict: Optional[Dict], message: str)
-        """
+    def authenticate(
+        self, username: str, password: str
+    ) -> Tuple[bool, Optional[Dict], str]:
         try:
             user = auth_login(username, password)
             if user:
                 self.current_session = user
                 self.auth.current_user = user
-                logger.info(f"Session started for {username}")
+                logger.info("Session started for %s", username)
                 return True, user, f"Welcome {user['full_name']}!"
             else:
-                logger.warning(f"Authentication failed for {username}")
+                logger.warning("Authentication failed for %s", username)
                 return False, None, "Invalid username or password"
         except Exception as e:
-            logger.error(f"Authentication error: {e}")
+            logger.error("Authentication error: %s", e)
             return False, None, f"Authentication error: {str(e)}"
 
     def get_current_user(self) -> Optional[Dict]:
-        """Get currently logged-in user session."""
         return self.current_session
 
     def is_authenticated(self) -> bool:
-        """Check if user is currently authenticated."""
         return self.current_session is not None
 
     def logout(self) -> Tuple[bool, str]:
-        """End current user session."""
         if self.current_session:
-            username = self.current_session.get('username', 'User')
+            username = self.current_session.get("username", "User")
             self.current_session = None
             self.auth.current_user = None
-            logger.info(f"Session ended for {username}")
-            return True, f"Logged out successfully"
+            logger.info("Session ended for %s", username)
+            return True, "Logged out successfully"
         return False, "No active session"
 
     def has_role(self, required_role: str) -> bool:
-        """Check if current user has required role."""
         if not self.current_session:
             return False
-        user_role = self.current_session.get('role', 'cashier')
-        role_hierarchy = {'admin': 3, 'manager': 2, 'cashier': 1}
+        user_role = self.current_session.get("role", "cashier")
+        role_hierarchy = {"admin": 3, "manager": 2, "cashier": 1}
         return role_hierarchy.get(user_role, 0) >= role_hierarchy.get(required_role, 0)
 
     def user_has_permission(self, permission: str) -> bool:
-        """Check if current user has a specific permission."""
         if not self.current_session:
             return False
-        role = self.current_session.get('role', 'cashier')
-        
+        role = self.current_session.get("role", "cashier")
         permissions = {
-            'admin': ['view_sales', 'process_sale', 'view_products', 'manage_products',
-                      'manage_inventory', 'view_reports', 'manage_users', 'manage_system'],
-            'manager': ['view_sales', 'process_sale', 'view_products', 'manage_products',
-                        'manage_inventory', 'view_reports'],
-            'cashier': ['view_sales', 'process_sale', 'view_products'],
+            "admin": [
+                "view_sales",
+                "process_sale",
+                "view_products",
+                "manage_products",
+                "manage_inventory",
+                "view_reports",
+                "manage_users",
+                "manage_system",
+            ],
+            "manager": [
+                "view_sales",
+                "process_sale",
+                "view_products",
+                "manage_products",
+                "manage_inventory",
+                "view_reports",
+            ],
+            "cashier": ["view_sales", "process_sale", "view_products"],
         }
-        
         return permission in permissions.get(role, [])

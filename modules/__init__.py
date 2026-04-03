@@ -1,8 +1,7 @@
 """
-Business logic modules for POS System
+Business logic modules for POS System.
 """
 
-# Import all functions from auth
 from .auth import (
     login,
     get_all_users,
@@ -16,10 +15,9 @@ from .auth import (
     get_current_user,
     update_user,
     reset_password,
-    Auth
+    Auth,
 )
 
-# Import all functions from products
 from .products import (
     ProductManager,
     get_all_products,
@@ -35,10 +33,9 @@ from .products import (
     adjust_stock,
     get_product_with_details,
     get_products_by_category,
-    bulk_import_products
+    bulk_import_products,
 )
 
-# Import all functions from sales
 from .sales import (
     SalesProcessor,
     cart_add_item,
@@ -55,26 +52,24 @@ from .sales import (
     get_sales_by_date,
     get_sales_summary,
     get_cashier_performance,
-    generate_receipt
+    generate_receipt,
 )
 
-# Import all functions from reports
 from .reports import (
     get_daily_summary,
     get_sales_by_date_range,
     get_top_products,
     get_payment_method_breakdown,
-    get_cashier_performance,
+    get_cashier_performance as get_cashier_performance_report,  # noqa: F811
     get_inventory_report,
     get_recent_transactions,
     get_low_performing_products,
     get_profit_analysis,
     get_hourly_sales_pattern,
     get_customer_loyalty_report,
-    export_report_to_csv
+    export_report_to_csv,
 )
 
-# Import all functions from payments
 from .payments import (
     PaymentMethod,
     PaymentStatus,
@@ -93,45 +88,82 @@ from .payments import (
     get_pending_payments,
     reconcile_payments,
     get_cash_drawer_summary,
-    process_refund
+    process_refund,
 )
 
-# Define what gets exported
 __all__ = [
-    # Auth
-    'Auth', 'login', 'get_all_users', 'create_user', 'change_password', 
-    'deactivate_user', 'activate_user', 'delete_user', 'has_permission', 
-    'get_role_permissions', 'get_current_user', 'update_user', 'reset_password',
-    
-    # Products
-    'ProductManager',
-    'get_all_products', 'search_products', 'get_product_by_barcode', 
-    'get_product_by_id', 'add_product', 'update_product', 'delete_product', 
-    'restore_product', 'get_categories', 'get_low_stock_products', 
-    'adjust_stock', 'get_product_with_details', 'get_products_by_category', 
-    'bulk_import_products',
-    
-    # Sales
-    'SalesProcessor',
-    'cart_add_item', 'cart_remove_item', 'cart_update_quantity', 
-    'cart_clear', 'cart_totals', 'get_cart_item_count', 'get_cart_summary', 
-    'process_sale', 'void_sale', 'get_sale_details', 'get_today_sales', 
-    'get_sales_by_date', 'get_sales_summary', 'get_cashier_performance', 
-    'generate_receipt',
-    
-    # Reports
-    'get_daily_summary', 'get_sales_by_date_range', 'get_top_products', 
-    'get_payment_method_breakdown', 'get_inventory_report', 
-    'get_recent_transactions', 'get_low_performing_products', 
-    'get_profit_analysis', 'get_hourly_sales_pattern', 
-    'get_customer_loyalty_report', 'export_report_to_csv',
-    
-    # Payments
-    'PaymentMethod', 'PaymentStatus',
-    'process_payment', 'validate_payment_method', 'validate_amount', 
-    'validate_cash_payment', 'validate_card_payment', 'validate_reference',
-    'process_cash_payment', 'process_momo_payment', 'process_card_payment', 
-    'process_bank_transfer', 'verify_payment_with_gateway',
-    'get_payment_summary', 'get_pending_payments', 'reconcile_payments', 
-    'get_cash_drawer_summary', 'process_refund'
+    "Auth",
+    "login",
+    "get_all_users",
+    "create_user",
+    "change_password",
+    "deactivate_user",
+    "activate_user",
+    "delete_user",
+    "has_permission",
+    "get_role_permissions",
+    "get_current_user",
+    "update_user",
+    "reset_password",
+    "ProductManager",
+    "get_all_products",
+    "search_products",
+    "get_product_by_barcode",
+    "get_product_by_id",
+    "add_product",
+    "update_product",
+    "delete_product",
+    "restore_product",
+    "get_categories",
+    "get_low_stock_products",
+    "adjust_stock",
+    "get_product_with_details",
+    "get_products_by_category",
+    "bulk_import_products",
+    "SalesProcessor",
+    "cart_add_item",
+    "cart_remove_item",
+    "cart_update_quantity",
+    "cart_clear",
+    "cart_totals",
+    "get_cart_item_count",
+    "get_cart_summary",
+    "process_sale",
+    "void_sale",
+    "get_sale_details",
+    "get_today_sales",
+    "get_sales_by_date",
+    "get_sales_summary",
+    "get_cashier_performance",
+    "generate_receipt",
+    "get_daily_summary",
+    "get_sales_by_date_range",
+    "get_top_products",
+    "get_payment_method_breakdown",
+    "get_cashier_performance_report",
+    "get_inventory_report",
+    "get_recent_transactions",
+    "get_low_performing_products",
+    "get_profit_analysis",
+    "get_hourly_sales_pattern",
+    "get_customer_loyalty_report",
+    "export_report_to_csv",
+    "PaymentMethod",
+    "PaymentStatus",
+    "process_payment",
+    "validate_payment_method",
+    "validate_amount",
+    "validate_cash_payment",
+    "validate_card_payment",
+    "validate_reference",
+    "process_cash_payment",
+    "process_momo_payment",
+    "process_card_payment",
+    "process_bank_transfer",
+    "verify_payment_with_gateway",
+    "get_payment_summary",
+    "get_pending_payments",
+    "reconcile_payments",
+    "get_cash_drawer_summary",
+    "process_refund",
 ]

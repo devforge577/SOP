@@ -1,4 +1,8 @@
-from database.db import get_connection, get_db_connection, execute_query, execute_update, update_inventory, get_low_stock_products as db_get_low_stock
+from database.db import (
+    get_connection,
+    update_inventory,
+    get_low_stock_products as db_get_low_stock,
+)
 from typing import Optional, List, Dict, Tuple
 import logging
 
@@ -35,7 +39,8 @@ def search_products(keyword: str) -> List[Dict]:
     conn = get_connection()
     cursor = conn.cursor()
     like = f"%{keyword.strip()}%"
-    cursor.execute("""
+    cursor.execute(
+        """
         SELECT p.product_id, p.product_name, p.category, p.price,
                p.barcode, p.supplier, p.is_active,
                COALESCE(i.quantity, 0) AS stock,
@@ -45,7 +50,9 @@ def search_products(keyword: str) -> List[Dict]:
         WHERE p.is_active = 1
           AND (p.product_name LIKE ? OR p.category LIKE ? OR p.barcode LIKE ?)
         ORDER BY p.product_name
-    """, (like, like, like))
+    """,
+        (like, like, like),
+    )
     products = [dict(row) for row in cursor.fetchall()]
     conn.close()
     return products
@@ -55,17 +62,20 @@ def get_product_by_barcode(barcode: str) -> Optional[Dict]:
     """Fetch a single product by barcode (used when scanning)."""
     if not barcode or not barcode.strip():
         return None
-    
+
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("""
+    cursor.execute(
+        """
         SELECT p.product_id, p.product_name, p.category, p.price,
                p.barcode, p.supplier, COALESCE(i.quantity, 0) AS stock,
                i.low_stock_alert
         FROM products p
         LEFT JOIN inventory i ON p.product_id = i.product_id
         WHERE p.barcode = ? AND p.is_active = 1
-    """, (barcode.strip(),))
+    """,
+        (barcode.strip(),),
+    )
     row = cursor.fetchone()
     conn.close()
     return dict(row) if row else None
@@ -75,23 +85,32 @@ def get_product_by_id(product_id: int) -> Optional[Dict]:
     """Fetch a single product by ID."""
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("""
+    cursor.execute(
+        """
         SELECT p.product_id, p.product_name, p.category, p.price,
                p.barcode, p.supplier, COALESCE(i.quantity, 0) AS stock,
                i.low_stock_alert
         FROM products p
         LEFT JOIN inventory i ON p.product_id = i.product_id
         WHERE p.product_id = ? AND p.is_active = 1
-    """, (product_id,))
+    """,
+        (product_id,),
+    )
     row = cursor.fetchone()
     conn.close()
     return dict(row) if row else None
 
 
-def add_product(product_name: str, category: str, price: float,
-                barcode: str = None, supplier: str = None,
-                initial_stock: int = 0, low_stock_alert: int = 5,
-                user_id: int = None) -> Tuple[bool, str]:
+def add_product(
+    product_name: str,
+    category: str,
+    price: float,
+    barcode: str = None,
+    supplier: str = None,
+    initial_stock: int = 0,
+    low_stock_alert: int = 5,
+    user_id: int = None,
+) -> Tuple[bool, str]:
     """
     Adds a new product and creates its inventory record.
     Returns (True, "success") or (False, "error message").
@@ -105,7 +124,7 @@ def add_product(product_name: str, category: str, price: float,
         return False, "Initial stock cannot be negative."
     if low_stock_alert < 0:
         return False, "Low stock alert cannot be negative."
-    
+
     # Clean inputs
     product_name = product_name.strip()
     category = category.strip() or "General"
@@ -116,18 +135,24 @@ def add_product(product_name: str, category: str, price: float,
     cursor = conn.cursor()
     try:
         # Insert product
-        cursor.execute("""
+        cursor.execute(
+            """
             INSERT INTO products (product_name, category, price, barcode, supplier)
             VALUES (?, ?, ?, ?, ?)
-        """, (product_name, category, price, barcode, supplier))
+        """,
+            (product_name, category, price, barcode, supplier),
+        )
         product_id = cursor.lastrowid
 
         # Create matching inventory record
-        cursor.execute("""
+        cursor.execute(
+            """
             INSERT INTO inventory (product_id, quantity, low_stock_alert)
             VALUES (?, ?, ?)
-        """, (product_id, initial_stock, low_stock_alert))
-        
+        """,
+            (product_id, initial_stock, low_stock_alert),
+        )
+
         # Log initial stock addition if any
         if initial_stock > 0:
             update_inventory(product_id, initial_stock, "Initial stock", user_id)
@@ -145,40 +170,47 @@ def add_product(product_name: str, category: str, price: float,
         conn.close()
 
 
-def update_product(product_id: int, product_name: str = None, category: str = None,
-                   price: float = None, barcode: str = None, supplier: str = None,
-                   low_stock_alert: int = None, user_id: int = None) -> Tuple[bool, str]:
+def update_product(
+    product_id: int,
+    product_name: str = None,
+    category: str = None,
+    price: float = None,
+    barcode: str = None,
+    supplier: str = None,
+    low_stock_alert: int = None,
+    user_id: int = None,
+) -> Tuple[bool, str]:
     """
     Updates an existing product's details.
     Returns (True, "success") or (False, "error message").
     """
     updates = []
     params = []
-    
+
     if product_name is not None:
         if not product_name.strip():
             return False, "Product name cannot be empty."
         updates.append("product_name = ?")
         params.append(product_name.strip())
-    
+
     if category is not None:
         updates.append("category = ?")
         params.append(category.strip() or "General")
-    
+
     if price is not None:
         if price < 0:
             return False, "Price cannot be negative."
         updates.append("price = ?")
         params.append(price)
-    
+
     if barcode is not None:
         params.append(barcode.strip() if barcode.strip() else None)
         updates.append("barcode = ?")
-    
+
     if supplier is not None:
         params.append(supplier.strip() if supplier.strip() else None)
         updates.append("supplier = ?")
-    
+
     if not updates:
         return False, "No fields to update"
 
@@ -188,20 +220,26 @@ def update_product(product_id: int, product_name: str = None, category: str = No
         # Update product
         if updates:
             params.append(product_id)
-            cursor.execute(f"""
+            cursor.execute(
+                f"""
                 UPDATE products
                 SET {', '.join(updates)}
                 WHERE product_id = ?
-            """, params)
-        
+            """,
+                params,
+            )
+
         # Update inventory alert level if provided
         if low_stock_alert is not None:
             if low_stock_alert < 0:
                 return False, "Low stock alert cannot be negative."
-            cursor.execute("""
+            cursor.execute(
+                """
                 UPDATE inventory SET low_stock_alert = ?
                 WHERE product_id = ?
-            """, (low_stock_alert, product_id))
+            """,
+                (low_stock_alert, product_id),
+            )
 
         conn.commit()
         logger.info(f"Product {product_id} updated")
@@ -224,18 +262,25 @@ def delete_product(product_id: int) -> Tuple[bool, str]:
     try:
         conn = get_connection()
         cursor = conn.cursor()
-        
+
         # Check if product has sales records
-        cursor.execute("SELECT COUNT(*) FROM sale_items WHERE product_id = ?", (product_id,))
+        cursor.execute(
+            "SELECT COUNT(*) FROM sale_items WHERE product_id = ?", (product_id,)
+        )
         sales_count = cursor.fetchone()[0]
-        
+
         if sales_count > 0:
             # Soft delete only if product has been sold
-            cursor.execute("""
+            cursor.execute(
+                """
                 UPDATE products SET is_active = 0 WHERE product_id = ?
-            """, (product_id,))
+            """,
+                (product_id,),
+            )
             conn.commit()
-            logger.info(f"Product {product_id} deactivated (has {sales_count} sales records)")
+            logger.info(
+                f"Product {product_id} deactivated (has {sales_count} sales records)"
+            )
             return True, "Product deactivated successfully."
         else:
             # Can hard delete if never sold
@@ -256,9 +301,12 @@ def restore_product(product_id: int) -> Tuple[bool, str]:
     try:
         conn = get_connection()
         cursor = conn.cursor()
-        cursor.execute("""
+        cursor.execute(
+            """
             UPDATE products SET is_active = 1 WHERE product_id = ?
-        """, (product_id,))
+        """,
+            (product_id,),
+        )
         conn.commit()
         logger.info(f"Product {product_id} restored")
         return True, "Product restored successfully."
@@ -273,10 +321,12 @@ def get_categories() -> List[str]:
     """Returns a sorted list of all unique product categories."""
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("""
+    cursor.execute(
+        """
         SELECT DISTINCT category FROM products
         WHERE is_active = 1 ORDER BY category
-    """)
+    """
+    )
     categories = [row["category"] for row in cursor.fetchall()]
     conn.close()
     return categories
@@ -287,8 +337,12 @@ def get_low_stock_products() -> List[Dict]:
     return db_get_low_stock()
 
 
-def adjust_stock(product_id: int, quantity_change: int, reason: str = "Manual adjustment",
-                 user_id: int = None) -> Tuple[bool, int]:
+def adjust_stock(
+    product_id: int,
+    quantity_change: int,
+    reason: str = "Manual adjustment",
+    user_id: int = None,
+) -> Tuple[bool, int]:
     """
     Adjusts stock by a delta. Use positive to add, negative to deduct.
     Returns (True, new_quantity) or (False, "error message").
@@ -296,9 +350,12 @@ def adjust_stock(product_id: int, quantity_change: int, reason: str = "Manual ad
     try:
         conn = get_connection()
         cursor = conn.cursor()
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT quantity FROM inventory WHERE product_id = ?
-        """, (product_id,))
+        """,
+            (product_id,),
+        )
         row = cursor.fetchone()
 
         if not row:
@@ -312,9 +369,11 @@ def adjust_stock(product_id: int, quantity_change: int, reason: str = "Manual ad
 
         # Update inventory using the transaction logging function
         success = update_inventory(product_id, quantity_change, reason, user_id)
-        
+
         if success:
-            logger.info(f"Stock adjusted for product {product_id}: {quantity_change} units, new quantity: {new_qty}")
+            logger.info(
+                f"Stock adjusted for product {product_id}: {quantity_change} units, new quantity: {new_qty}"
+            )
             return True, new_qty
         else:
             return False, "Failed to update inventory"
@@ -329,17 +388,20 @@ def get_product_with_details(product_id: int) -> Optional[Dict]:
     """Get complete product details including inventory and sales stats"""
     conn = get_connection()
     cursor = conn.cursor()
-    
-    cursor.execute("""
-        SELECT p.*, 
+
+    cursor.execute(
+        """
+        SELECT p.*,
                i.quantity, i.low_stock_alert, i.last_updated,
                (SELECT COUNT(*) FROM sale_items WHERE product_id = ?) as total_sold,
                (SELECT SUM(quantity) FROM sale_items WHERE product_id = ?) as total_quantity_sold
         FROM products p
         LEFT JOIN inventory i ON p.product_id = i.product_id
         WHERE p.product_id = ?
-    """, (product_id, product_id, product_id))
-    
+    """,
+        (product_id, product_id, product_id),
+    )
+
     row = cursor.fetchone()
     conn.close()
     return dict(row) if row else None
@@ -349,38 +411,43 @@ def get_products_by_category(category: str) -> List[Dict]:
     """Get all products in a specific category"""
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("""
+    cursor.execute(
+        """
         SELECT p.product_id, p.product_name, p.price,
                COALESCE(i.quantity, 0) AS stock
         FROM products p
         LEFT JOIN inventory i ON p.product_id = i.product_id
         WHERE p.category = ? AND p.is_active = 1
         ORDER BY p.product_name
-    """, (category,))
+    """,
+        (category,),
+    )
     products = [dict(row) for row in cursor.fetchall()]
     conn.close()
     return products
 
 
-def bulk_import_products(products_list: List[Dict], user_id: int = None) -> Tuple[bool, str, int]:
+def bulk_import_products(
+    products_list: List[Dict], user_id: int = None
+) -> Tuple[bool, str, int]:
     """
     Bulk import multiple products
     Returns (success, message, count_imported)
     """
     imported = 0
     errors = []
-    
+
     for product in products_list:
         try:
             success, msg = add_product(
-                product_name=product.get('name'),
-                category=product.get('category', 'General'),
-                price=product.get('price', 0),
-                barcode=product.get('barcode'),
-                supplier=product.get('supplier'),
-                initial_stock=product.get('stock', 0),
-                low_stock_alert=product.get('low_stock_alert', 5),
-                user_id=user_id
+                product_name=product.get("name"),
+                category=product.get("category", "General"),
+                price=product.get("price", 0),
+                barcode=product.get("barcode"),
+                supplier=product.get("supplier"),
+                initial_stock=product.get("stock", 0),
+                low_stock_alert=product.get("low_stock_alert", 5),
+                user_id=user_id,
             )
             if success:
                 imported += 1
@@ -388,24 +455,30 @@ def bulk_import_products(products_list: List[Dict], user_id: int = None) -> Tupl
                 errors.append(f"{product.get('name')}: {msg}")
         except Exception as e:
             errors.append(f"{product.get('name')}: {str(e)}")
-    
+
     if errors:
-        return False, f"Imported {imported} products. Errors: {'; '.join(errors[:5])}", imported
+        return (
+            False,
+            f"Imported {imported} products. Errors: {'; '.join(errors[:5])}",
+            imported,
+        )
     return True, f"Successfully imported {imported} products", imported
 
 
 # ── Quick test ───────────────────────────────────────────────────────────
 if __name__ == "__main__":
     # Test adding a product
-    success, msg = add_product("Test Product", "Test Category", 19.99, "TEST001", "Test Supplier", 100)
+    success, msg = add_product(
+        "Test Product", "Test Category", 19.99, "TEST001", "Test Supplier", 100
+    )
     print(f"Add product: {msg}")
-    
+
     # Get all products
     products = get_all_products()
     print(f"\nTotal products: {len(products)}")
     for p in products[:5]:  # Show first 5
         print(f"  {p['product_name']} - ${p['price']} - Stock: {p['stock']}")
-    
+
     # Check low stock
     low_stock = get_low_stock_products()
     print(f"\nLow stock products: {len(low_stock)}")
@@ -463,15 +536,17 @@ class ProductManager:
 # ── Quick test ───────────────────────────────────────────────────────────
 if __name__ == "__main__":
     # Test adding a product
-    success, msg = add_product("Test Product", "Test Category", 19.99, "TEST001", "Test Supplier", 100)
+    success, msg = add_product(
+        "Test Product", "Test Category", 19.99, "TEST001", "Test Supplier", 100
+    )
     print(f"Add product: {msg}")
-    
+
     # Get all products
     products = get_all_products()
     print(f"\nTotal products: {len(products)}")
     for p in products[:5]:  # Show first 5
         print(f"  {p['product_name']} - ${p['price']} - Stock: {p['stock']}")
-    
+
     # Check low stock
     low_stock = get_low_stock_products()
     print(f"\nLow stock products: {len(low_stock)}")

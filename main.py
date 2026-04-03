@@ -43,7 +43,7 @@ class Dashboard(tk.Tk):
     def _center_window(self):
         self.update_idletasks()
         w, h = 680, 520
-        x = (self.winfo_screenwidth()  // 2) - (w // 2)
+        x = (self.winfo_screenwidth() // 2) - (w // 2)
         y = (self.winfo_screenheight() // 2) - (h // 2)
         self.geometry(f"{w}x{h}+{x}+{y}")
 
@@ -52,15 +52,20 @@ class Dashboard(tk.Tk):
         header = tk.Frame(self, bg="#16213e", pady=20)
         header.pack(fill="x")
 
-        tk.Label(header, text="🛒  POS System",
-                 font=("Segoe UI", 22, "bold"),
-                 bg="#16213e", fg="white").pack()
+        tk.Label(
+            header,
+            text="🛒  POS System",
+            font=("Segoe UI", 22, "bold"),
+            bg="#16213e",
+            fg="white",
+        ).pack()
 
         tk.Label(
             header,
             text=f"Welcome, {self.user['full_name']}  ·  {self.user['role'].capitalize()}",
             font=("Segoe UI", 10),
-            bg="#16213e", fg="#8892b0"
+            bg="#16213e",
+            fg="#8892b0",
         ).pack(pady=(4, 0))
 
         # Nav buttons
@@ -75,64 +80,67 @@ class Dashboard(tk.Tk):
                 "#e94560",
                 self._open_cashier,
                 True,
-                "Available to all roles"
+                "Available to all roles",
             ),
             (
                 "📦  Product Management",
                 "#0f3460",
                 self._open_products,
                 role in ("admin", "manager"),
-                "Admin & Manager only"
+                "Admin & Manager only",
             ),
             (
                 "📊  Reports & Analytics",
                 "#1b4332",
                 self._open_reports,
                 role in ("admin", "manager"),
-                "Admin & Manager only"
+                "Admin & Manager only",
             ),
             (
                 "👥  User Management",
                 "#4a235a",
                 self._open_user_management,
                 role == "admin",
-                "Admin only"
+                "Admin only",
             ),
-            (
-                "🚪  Logout",
-                "#444",
-                self._logout,
-                True,
-                ""
-            ),
+            ("🚪  Logout", "#444", self._logout, True, ""),
         ]
 
         for text, color, cmd, allowed, tooltip in buttons:
             state = "normal" if allowed else "disabled"
             btn = tk.Button(
-                nav, text=text,
+                nav,
+                text=text,
                 font=("Segoe UI", 12, "bold"),
-                bg=color, fg="white",
-                activebackground=color, activeforeground="white",
+                bg=color,
+                fg="white",
+                activebackground=color,
+                activeforeground="white",
                 relief="flat",
                 cursor="hand2" if allowed else "arrow",
-                pady=14, state=state,
-                command=cmd
+                pady=14,
+                state=state,
+                command=cmd,
             )
             btn.pack(fill="x", pady=5)
 
             # Show tooltip hint for restricted buttons
             if not allowed and tooltip:
                 tk.Label(
-                    nav, text=f"  ↑ {tooltip}",
-                    font=("Segoe UI", 7), bg="#1a1a2e", fg="#555"
+                    nav,
+                    text=f"  ↑ {tooltip}",
+                    font=("Segoe UI", 7),
+                    bg="#1a1a2e",
+                    fg="#555",
                 ).pack(anchor="w", pady=(0, 2))
 
         # Footer
         tk.Label(
             self,
             text="Restricted buttons require elevated role permissions.",
-            font=("Segoe UI", 8), bg="#1a1a2e", fg="#444"
+            font=("Segoe UI", 8),
+            bg="#1a1a2e",
+            fg="#444",
         ).pack(pady=(0, 10))
 
     def _open_cashier(self):
@@ -149,7 +157,7 @@ class Dashboard(tk.Tk):
 
     def _logout(self):
         if messagebox.askyesno("Logout", "Log out and return to the login screen?"):
-            log_security_event('USER_LOGOUT', user=self.user.get('username', 'unknown'))
+            log_security_event("USER_LOGOUT", user=self.user.get("username", "unknown"))
             logger.info(f"User logged out: {self.user.get('username', 'unknown')}")
             self.auth.logout()
             self.destroy()
@@ -158,8 +166,10 @@ class Dashboard(tk.Tk):
 
 
 def launch_dashboard(user: dict):
-    log_security_event('USER_LOGIN_SUCCESS', user=user.get('username', 'unknown'))
-    logger.info(f"User logged in: {user.get('username', 'unknown')} ({user.get('role', 'unknown')})")
+    log_security_event("USER_LOGIN_SUCCESS", user=user.get("username", "unknown"))
+    logger.info(
+        f"User logged in: {user.get('username', 'unknown')} ({user.get('role', 'unknown')})"
+    )
     dashboard = Dashboard(user)
     dashboard.mainloop()
 

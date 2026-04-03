@@ -27,7 +27,7 @@ if not _secret_key or _secret_key == "dev-key-change-in-production":
     raise EnvironmentError(
         "SECRET_KEY is not set or is using the default placeholder.\n"
         "Generate a secure key and add it to your .env file:\n"
-        "  python -c \"import secrets; print(secrets.token_hex(32))\""
+        '  python -c "import secrets; print(secrets.token_hex(32))"'
     )
 
 
@@ -90,7 +90,8 @@ def create_tables():
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute("""
+    cursor.execute(
+        """
         CREATE TABLE IF NOT EXISTS users (
             user_id     INTEGER PRIMARY KEY AUTOINCREMENT,
             username    TEXT    NOT NULL UNIQUE,
@@ -100,9 +101,11 @@ def create_tables():
             is_active   INTEGER NOT NULL DEFAULT 1,
             created_at  TEXT    NOT NULL DEFAULT (datetime('now'))
         )
-    """)
+    """
+    )
 
-    cursor.execute("""
+    cursor.execute(
+        """
         CREATE TABLE IF NOT EXISTS products (
             product_id   INTEGER PRIMARY KEY AUTOINCREMENT,
             product_name TEXT    NOT NULL,
@@ -113,9 +116,11 @@ def create_tables():
             is_active    INTEGER NOT NULL DEFAULT 1,
             created_at   TEXT    NOT NULL DEFAULT (datetime('now'))
         )
-    """)
+    """
+    )
 
-    cursor.execute("""
+    cursor.execute(
+        """
         CREATE TABLE IF NOT EXISTS inventory (
             inventory_id    INTEGER PRIMARY KEY AUTOINCREMENT,
             product_id      INTEGER NOT NULL UNIQUE,
@@ -124,9 +129,11 @@ def create_tables():
             last_updated    TEXT    NOT NULL DEFAULT (datetime('now')),
             FOREIGN KEY (product_id) REFERENCES products(product_id) ON DELETE CASCADE
         )
-    """)
+    """
+    )
 
-    cursor.execute("""
+    cursor.execute(
+        """
         CREATE TABLE IF NOT EXISTS inventory_transactions (
             transaction_id    INTEGER PRIMARY KEY AUTOINCREMENT,
             product_id        INTEGER NOT NULL,
@@ -140,9 +147,11 @@ def create_tables():
             FOREIGN KEY (product_id) REFERENCES products(product_id),
             FOREIGN KEY (user_id)    REFERENCES users(user_id)
         )
-    """)
+    """
+    )
 
-    cursor.execute("""
+    cursor.execute(
+        """
         CREATE TABLE IF NOT EXISTS customers (
             customer_id    INTEGER PRIMARY KEY AUTOINCREMENT,
             full_name      TEXT NOT NULL,
@@ -152,9 +161,11 @@ def create_tables():
             loyalty_points INTEGER NOT NULL DEFAULT 0,
             created_at     TEXT    NOT NULL DEFAULT (datetime('now'))
         )
-    """)
+    """
+    )
 
-    cursor.execute("""
+    cursor.execute(
+        """
         CREATE TABLE IF NOT EXISTS sales (
             sale_id        INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id        INTEGER NOT NULL,
@@ -167,9 +178,11 @@ def create_tables():
             FOREIGN KEY (user_id)     REFERENCES users(user_id),
             FOREIGN KEY (customer_id) REFERENCES customers(customer_id)
         )
-    """)
+    """
+    )
 
-    cursor.execute("""
+    cursor.execute(
+        """
         CREATE TABLE IF NOT EXISTS sale_items (
             sale_item_id INTEGER PRIMARY KEY AUTOINCREMENT,
             sale_id      INTEGER NOT NULL,
@@ -180,16 +193,19 @@ def create_tables():
             FOREIGN KEY (sale_id)    REFERENCES sales(sale_id) ON DELETE CASCADE,
             FOREIGN KEY (product_id) REFERENCES products(product_id)
         )
-    """)
+    """
+    )
 
-    cursor.execute("""
+    cursor.execute(
+        """
         CREATE TABLE IF NOT EXISTS payments (
             payment_id     INTEGER PRIMARY KEY AUTOINCREMENT,
             sale_id        INTEGER NOT NULL,
             amount_paid    REAL    NOT NULL,
             change_given   REAL    NOT NULL DEFAULT 0,
             payment_method TEXT    NOT NULL CHECK(payment_method IN ('cash', 'momo', 'card', 'bank_transfer')),
-            status         TEXT    NOT NULL DEFAULT 'completed' CHECK(status IN ('pending', 'processing', 'completed', 'failed', 'reversed')),
+            status         TEXT    NOT NULL DEFAULT 'completed'
+                           CHECK(status IN ('pending', 'processing', 'completed', 'failed', 'reversed')),
             reference      TEXT,
             provider       TEXT,
             fee            REAL    NOT NULL DEFAULT 0,
@@ -197,19 +213,39 @@ def create_tables():
             created_at     TEXT    NOT NULL DEFAULT (datetime('now')),
             FOREIGN KEY (sale_id) REFERENCES sales(sale_id) ON DELETE CASCADE
         )
-    """)
+    """
+    )
 
     # Indexes
-    cursor.execute("CREATE INDEX IF NOT EXISTS idx_products_barcode    ON products(barcode)")
-    cursor.execute("CREATE INDEX IF NOT EXISTS idx_products_category   ON products(category)")
-    cursor.execute("CREATE INDEX IF NOT EXISTS idx_sales_date          ON sales(sale_date)")
-    cursor.execute("CREATE INDEX IF NOT EXISTS idx_sales_user          ON sales(user_id)")
-    cursor.execute("CREATE INDEX IF NOT EXISTS idx_inventory_low_stock ON inventory(quantity, low_stock_alert)")
-    cursor.execute("CREATE INDEX IF NOT EXISTS idx_payments_date       ON payments(payment_date)")
-    cursor.execute("CREATE INDEX IF NOT EXISTS idx_payments_method     ON payments(payment_method)")
-    cursor.execute("CREATE INDEX IF NOT EXISTS idx_payments_status     ON payments(payment_status)" if False else
-                   "CREATE INDEX IF NOT EXISTS idx_payments_status     ON payments(status)")
-    cursor.execute("CREATE INDEX IF NOT EXISTS idx_payments_sale       ON payments(sale_id)")
+    cursor.execute(
+        "CREATE INDEX IF NOT EXISTS idx_products_barcode    ON products(barcode)"
+    )
+    cursor.execute(
+        "CREATE INDEX IF NOT EXISTS idx_products_category   ON products(category)"
+    )
+    cursor.execute(
+        "CREATE INDEX IF NOT EXISTS idx_sales_date          ON sales(sale_date)"
+    )
+    cursor.execute(
+        "CREATE INDEX IF NOT EXISTS idx_sales_user          ON sales(user_id)"
+    )
+    cursor.execute(
+        "CREATE INDEX IF NOT EXISTS idx_inventory_low_stock ON inventory(quantity, low_stock_alert)"
+    )
+    cursor.execute(
+        "CREATE INDEX IF NOT EXISTS idx_payments_date       ON payments(payment_date)"
+    )
+    cursor.execute(
+        "CREATE INDEX IF NOT EXISTS idx_payments_method     ON payments(payment_method)"
+    )
+    cursor.execute(
+        "CREATE INDEX IF NOT EXISTS idx_payments_status     ON payments(payment_status)"
+        if False
+        else "CREATE INDEX IF NOT EXISTS idx_payments_status     ON payments(status)"
+    )
+    cursor.execute(
+        "CREATE INDEX IF NOT EXISTS idx_payments_sale       ON payments(sale_id)"
+    )
 
     conn.commit()
     conn.close()
@@ -253,7 +289,9 @@ def seed_default_admin():
                 )
                 logger.warning(
                     "Seeded account: %s / %s (%s) — change this password immediately!",
-                    username, password, role,
+                    username,
+                    password,
+                    role,
                 )
 
 
@@ -266,14 +304,14 @@ def seed_sample_data():
             return
 
         sample_products = [
-            ("Laptop",       "Electronics", 999.99, "BAR001", "TechSupplier"),
-            ("Mouse",        "Electronics",  29.99, "BAR002", "TechSupplier"),
-            ("Keyboard",     "Electronics",  79.99, "BAR003", "TechSupplier"),
-            ("Monitor",      "Electronics", 299.99, "BAR004", "TechSupplier"),
-            ("Printer",      "Office",       199.99, "BAR005", "OfficeSupply"),
-            ("Paper A4",     "Office",         9.99, "BAR006", "OfficeSupply"),
-            ("Desk",         "Furniture",    249.99, "BAR007", "FurnitureCo"),
-            ("Office Chair", "Furniture",    149.99, "BAR008", "FurnitureCo"),
+            ("Laptop", "Electronics", 999.99, "BAR001", "TechSupplier"),
+            ("Mouse", "Electronics", 29.99, "BAR002", "TechSupplier"),
+            ("Keyboard", "Electronics", 79.99, "BAR003", "TechSupplier"),
+            ("Monitor", "Electronics", 299.99, "BAR004", "TechSupplier"),
+            ("Printer", "Office", 199.99, "BAR005", "OfficeSupply"),
+            ("Paper A4", "Office", 9.99, "BAR006", "OfficeSupply"),
+            ("Desk", "Furniture", 249.99, "BAR007", "FurnitureCo"),
+            ("Office Chair", "Furniture", 149.99, "BAR008", "FurnitureCo"),
         ]
 
         for product in sample_products:
@@ -293,18 +331,20 @@ def seed_sample_data():
 def initialize_database(with_sample_data: bool = False):
     """Full database setup: create tables + seed defaults + optional sample data."""
     create_tables()
-    
+
     # Add this import and call
     from database.migrate import run_migrations
+
     with get_db_connection() as conn:
         run_migrations(conn)
-    
+
     seed_default_admin()
     if with_sample_data:
         seed_sample_data()
 
 
 # ── Helper functions ──────────────────────────────────────────────────────────
+
 
 def execute_query(query: str, params: tuple = ()) -> List[Dict[str, Any]]:
     with get_db_connection() as conn:
@@ -338,12 +378,16 @@ def get_product_with_inventory(product_id: int) -> Optional[Dict[str, Any]]:
     return results[0] if results else None
 
 
-def update_inventory(product_id: int, quantity_change: int, reason: str, user_id: int = None) -> bool:
+def update_inventory(
+    product_id: int, quantity_change: int, reason: str, user_id: int = None
+) -> bool:
     """Update inventory with full audit trail. quantity_change: + for add, - for remove."""
     try:
         with get_db_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("SELECT quantity FROM inventory WHERE product_id = ?", (product_id,))
+            cursor.execute(
+                "SELECT quantity FROM inventory WHERE product_id = ?", (product_id,)
+            )
             result = cursor.fetchone()
 
             if not result:
@@ -364,12 +408,26 @@ def update_inventory(product_id: int, quantity_change: int, reason: str, user_id
                 (new_qty, product_id),
             )
 
-            transaction_type = "add" if quantity_change > 0 else "remove" if quantity_change < 0 else "adjust"
+            transaction_type = (
+                "add"
+                if quantity_change > 0
+                else "remove"
+                if quantity_change < 0
+                else "adjust"
+            )
             cursor.execute(
                 """INSERT INTO inventory_transactions
                    (product_id, transaction_type, quantity_change, previous_quantity, new_quantity, reason, user_id)
                    VALUES (?,?,?,?,?,?,?)""",
-                (product_id, transaction_type, abs(quantity_change), current_qty, new_qty, reason, user_id),
+                (
+                    product_id,
+                    transaction_type,
+                    abs(quantity_change),
+                    current_qty,
+                    new_qty,
+                    reason,
+                    user_id,
+                ),
             )
             return True
     except Exception as e:

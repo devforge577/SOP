@@ -1,5 +1,4 @@
 """Database backup and restore utilities."""
-import os
 import shutil
 import sqlite3
 from datetime import datetime
@@ -10,7 +9,7 @@ from utils.logging_config import log_security_event
 logger = logging.getLogger(__name__)
 
 # Create backups directory
-BACKUP_DIR = Path('backups')
+BACKUP_DIR = Path("backups")
 BACKUP_DIR.mkdir(exist_ok=True)
 
 
@@ -28,13 +27,13 @@ def create_backup(backup_name=None, include_logs=True):
     try:
         # Generate backup name if not provided
         if not backup_name:
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             backup_name = f"pos_backup_{timestamp}"
 
         backup_path = BACKUP_DIR / f"{backup_name}.db"
 
         # Copy database file
-        db_path = Path('database/pos_system.db')
+        db_path = Path("database/pos_system.db")
         if db_path.exists():
             shutil.copy2(db_path, backup_path)
             logger.info(f"Database backup created: {backup_path}")
@@ -47,14 +46,14 @@ def create_backup(backup_name=None, include_logs=True):
             archive_path = BACKUP_DIR / archive_name
 
             # Create archive with database and logs
-            shutil.make_archive(str(archive_path), 'zip', '.', 'database')
-            if Path('logs').exists():
-                shutil.make_archive(str(archive_path), 'zip', '.', 'logs')
+            shutil.make_archive(str(archive_path), "zip", ".", "database")
+            if Path("logs").exists():
+                shutil.make_archive(str(archive_path), "zip", ".", "logs")
 
             logger.info(f"Full backup archive created: {archive_path}.zip")
-            return archive_path.with_suffix('.zip')
+            return archive_path.with_suffix(".zip")
 
-        log_security_event('BACKUP_CREATED', details=f"Backup: {backup_name}")
+        log_security_event("BACKUP_CREATED", details=f"Backup: {backup_name}")
         return backup_path
 
     except Exception as e:
@@ -66,17 +65,19 @@ def list_backups():
     """List all available backups."""
     backups = []
     for file_path in BACKUP_DIR.iterdir():
-        if file_path.suffix in ['.db', '.zip']:
+        if file_path.suffix in [".db", ".zip"]:
             stat = file_path.stat()
-            backups.append({
-                'name': file_path.stem,
-                'path': str(file_path),
-                'size': stat.st_size,
-                'created': datetime.fromtimestamp(stat.st_ctime).isoformat(),
-                'type': 'database' if file_path.suffix == '.db' else 'archive'
-            })
+            backups.append(
+                {
+                    "name": file_path.stem,
+                    "path": str(file_path),
+                    "size": stat.st_size,
+                    "created": datetime.fromtimestamp(stat.st_ctime).isoformat(),
+                    "type": "database" if file_path.suffix == ".db" else "archive",
+                }
+            )
 
-    return sorted(backups, key=lambda x: x['created'], reverse=True)
+    return sorted(backups, key=lambda x: x["created"], reverse=True)
 
 
 def restore_backup(backup_path, confirm=True):
@@ -93,8 +94,10 @@ def restore_backup(backup_path, confirm=True):
         raise FileNotFoundError(f"Backup file not found: {backup_path}")
 
     if confirm:
-        response = input(f"Restore from {backup_path}? This will overwrite current database. (y/N): ")
-        if response.lower() != 'y':
+        response = input(
+            f"Restore from {backup_path}? This will overwrite current database. (y/N): "
+        )
+        if response.lower() != "y":
             print("Restore cancelled.")
             return
 
@@ -103,12 +106,12 @@ def restore_backup(backup_path, confirm=True):
         current_backup = create_backup("pre_restore_backup", include_logs=False)
 
         # Restore database
-        db_path = Path('database/pos_system.db')
-        if backup_path.suffix == '.zip':
+        db_path = Path("database/pos_system.db")
+        if backup_path.suffix == ".zip":
             # Extract from archive
-            temp_dir = BACKUP_DIR / 'temp_restore'
+            temp_dir = BACKUP_DIR / "temp_restore"
             shutil.unpack_archive(backup_path, temp_dir)
-            extracted_db = temp_dir / 'database' / 'pos_system.db'
+            extracted_db = temp_dir / "database" / "pos_system.db"
             if extracted_db.exists():
                 shutil.copy2(extracted_db, db_path)
             shutil.rmtree(temp_dir)
@@ -117,7 +120,7 @@ def restore_backup(backup_path, confirm=True):
             shutil.copy2(backup_path, db_path)
 
         logger.info(f"Database restored from: {backup_path}")
-        log_security_event('BACKUP_RESTORED', details=f"From: {backup_path}")
+        log_security_event("BACKUP_RESTORED", details=f"From: {backup_path}")
 
         # Verify restore
         conn = sqlite3.connect(db_path)
@@ -135,7 +138,7 @@ def restore_backup(backup_path, confirm=True):
         try:
             restore_backup(current_backup, confirm=False)
             logger.info("Rolled back to pre-restore state")
-        except:
+        except Exception:
             logger.error("Rollback failed")
         raise
 
@@ -153,7 +156,7 @@ def cleanup_old_backups(keep_days=30, keep_count=10):
         backups = list_backups()
 
         # Sort by creation time (newest first)
-        backups.sort(key=lambda x: x['created'], reverse=True)
+        backups.sort(key=lambda x: x["created"], reverse=True)
 
         to_delete = []
 
@@ -163,7 +166,7 @@ def cleanup_old_backups(keep_days=30, keep_count=10):
                 continue
 
             # Check age
-            created = datetime.fromisoformat(backup['created'])
+            created = datetime.fromisoformat(backup["created"])
             age_days = (now - created).days
 
             if age_days > keep_days:
@@ -171,11 +174,13 @@ def cleanup_old_backups(keep_days=30, keep_count=10):
 
         # Delete old backups
         for backup in to_delete:
-            path = Path(backup['path'])
+            path = Path(backup["path"])
             path.unlink()
             logger.info(f"Deleted old backup: {path}")
 
-        log_security_event('BACKUP_CLEANUP', details=f"Deleted {len(to_delete)} old backups")
+        log_security_event(
+            "BACKUP_CLEANUP", details=f"Deleted {len(to_delete)} old backups"
+        )
 
     except Exception as e:
         logger.error(f"Backup cleanup failed: {e}")
@@ -211,27 +216,29 @@ if __name__ == "__main__":
 
     command = sys.argv[1]
 
-    if command == 'create':
+    if command == "create":
         name = sys.argv[2] if len(sys.argv) > 2 else None
         path = create_backup(name)
         print(f"Backup created: {path}")
 
-    elif command == 'list':
+    elif command == "list":
         backups = list_backups()
         if not backups:
             print("No backups found")
         else:
             print("Available backups:")
             for backup in backups:
-                print(f"  {backup['name']} ({backup['type']}) - {backup['created']} - {backup['size']} bytes")
+                print(
+                    f"  {backup['name']} ({backup['type']}) - {backup['created']} - {backup['size']} bytes"
+                )
 
-    elif command == 'restore':
+    elif command == "restore":
         if len(sys.argv) < 3:
             print("Error: backup path required")
             sys.exit(1)
         restore_backup(sys.argv[2])
 
-    elif command == 'cleanup':
+    elif command == "cleanup":
         cleanup_old_backups()
         print("Cleanup completed")
 

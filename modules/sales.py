@@ -1,8 +1,11 @@
-from database.db import get_connection, get_db_connection, update_inventory, execute_query, execute_insert
-from modules.products import get_product_by_id, get_product_by_barcode, adjust_stock
+from database.db import (
+    get_connection,
+    get_db_connection,
+    update_inventory,
+)
+from modules.products import get_product_by_id
 from typing import List, Dict, Tuple, Optional
 import logging
-from datetime import datetime
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -10,7 +13,10 @@ logger = logging.getLogger(__name__)
 
 # ── Cart helpers ───────────────────────────────────────────────────────────────
 
-def cart_add_item(cart: list, product: dict, quantity: int = 1) -> Tuple[list, bool, str]:
+
+def cart_add_item(
+    cart: list, product: dict, quantity: int = 1
+) -> Tuple[list, bool, str]:
     """
     Adds a product to the cart or increments quantity if already present.
     Checks stock availability before adding.
@@ -20,11 +26,14 @@ def cart_add_item(cart: list, product: dict, quantity: int = 1) -> Tuple[list, b
 
     available = product.get("stock", 0)
     already_in_cart = sum(
-        item["quantity"] for item in cart
-        if item["product_id"] == product["product_id"]
+        item["quantity"] for item in cart if item["product_id"] == product["product_id"]
     )
     if already_in_cart + quantity > available:
-        return cart, False, f"Only {available} in stock ({already_in_cart} already in cart)."
+        return (
+            cart,
+            False,
+            f"Only {available} in stock ({already_in_cart} already in cart).",
+        )
 
     for item in cart:
         if item["product_id"] == product["product_id"]:
@@ -33,13 +42,15 @@ def cart_add_item(cart: list, product: dict, quantity: int = 1) -> Tuple[list, b
             logger.info(f"Updated cart: {product['product_name']} x{item['quantity']}")
             return cart, True, "Quantity updated."
 
-    cart.append({
-        "product_id":   product["product_id"],
-        "product_name": product["product_name"],
-        "unit_price":   product["price"],
-        "quantity":     quantity,
-        "subtotal":     round(quantity * product["price"], 2),
-    })
+    cart.append(
+        {
+            "product_id": product["product_id"],
+            "product_name": product["product_name"],
+            "unit_price": product["price"],
+            "quantity": quantity,
+            "subtotal": round(quantity * product["price"], 2),
+        }
+    )
     logger.info(f"Added to cart: {product['product_name']} x{quantity}")
     return cart, True, "Item added."
 
@@ -52,8 +63,9 @@ def cart_remove_item(cart: list, product_id: int) -> list:
     return [item for item in cart if item["product_id"] != product_id]
 
 
-def cart_update_quantity(cart: list, product_id: int,
-                          new_qty: int) -> Tuple[list, bool, str]:
+def cart_update_quantity(
+    cart: list, product_id: int, new_qty: int
+) -> Tuple[list, bool, str]:
     """Updates the quantity of a cart item."""
     if new_qty <= 0:
         return cart_remove_item(cart, product_id), True, "Item removed."
@@ -77,23 +89,22 @@ def cart_clear(cart: list) -> list:
     return []
 
 
-def cart_totals(cart: list, discount: float = 0.0,
-                tax_rate: float = 0.0) -> dict:
+def cart_totals(cart: list, discount: float = 0.0, tax_rate: float = 0.0) -> dict:
     """
     Calculates subtotal, discount, tax, and grand total.
     discount: fixed GHS amount off
     tax_rate: percentage e.g. 0.15 for 15%
     """
-    subtotal       = round(sum(item["subtotal"] for item in cart), 2)
-    discount       = min(round(discount, 2), subtotal)
+    subtotal = round(sum(item["subtotal"] for item in cart), 2)
+    discount = min(round(discount, 2), subtotal)
     after_discount = round(subtotal - discount, 2)
-    tax            = round(after_discount * tax_rate, 2)
-    total          = round(after_discount + tax, 2)
+    tax = round(after_discount * tax_rate, 2)
+    total = round(after_discount + tax, 2)
     return {
         "subtotal": subtotal,
         "discount": discount,
-        "tax":      tax,
-        "total":    total,
+        "tax": tax,
+        "total": total,
     }
 
 
@@ -114,10 +125,16 @@ def get_cart_summary(cart: list) -> str:
 
 # ── Sale processing ────────────────────────────────────────────────────────────
 
-def process_sale(cart: list, user_id: int, payment_method: str,
-                 amount_paid: float, discount: float = 0.0,
-                 tax_rate: float = 0.0,
-                 customer_id: int = None) -> Tuple[bool, Optional[int], float, str]:
+
+def process_sale(
+    cart: list,
+    user_id: int,
+    payment_method: str,
+    amount_paid: float,
+    discount: float = 0.0,
+    tax_rate: float = 0.0,
+    customer_id: int = None,
+) -> Tuple[bool, Optional[int], float, str]:
     """
     Commits a completed sale to the database.
     Deducts stock for every item in the cart.
@@ -134,9 +151,14 @@ def process_sale(cart: list, user_id: int, payment_method: str,
     totals = cart_totals(cart, discount, tax_rate)
 
     if amount_paid < totals["total"]:
-        return False, None, 0, (
-            f"Amount paid (GHS {amount_paid:.2f}) is less than "
-            f"total (GHS {totals['total']:.2f})."
+        return (
+            False,
+            None,
+            0,
+            (
+                f"Amount paid (GHS {amount_paid:.2f}) is less than "
+                f"total (GHS {totals['total']:.2f})."
+            ),
         )
 
     change = round(amount_paid - totals["total"], 2)
@@ -145,30 +167,50 @@ def process_sale(cart: list, user_id: int, payment_method: str,
     cursor = conn.cursor()
     try:
         # Insert sale record
-        cursor.execute("""
+        cursor.execute(
+            """
             INSERT INTO sales
                 (user_id, customer_id, total_amount, discount, tax, payment_method)
             VALUES (?, ?, ?, ?, ?, ?)
-        """, (user_id, customer_id, totals["total"],
-              totals["discount"], totals["tax"], payment_method))
+        """,
+            (
+                user_id,
+                customer_id,
+                totals["total"],
+                totals["discount"],
+                totals["tax"],
+                payment_method,
+            ),
+        )
         sale_id = cursor.lastrowid
 
         # Insert each sale item
         for item in cart:
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT INTO sale_items
                     (sale_id, product_id, quantity, unit_price, subtotal)
                 VALUES (?, ?, ?, ?, ?)
-            """, (sale_id, item["product_id"], item["quantity"],
-                  item["unit_price"], item["subtotal"]))
+            """,
+                (
+                    sale_id,
+                    item["product_id"],
+                    item["quantity"],
+                    item["unit_price"],
+                    item["subtotal"],
+                ),
+            )
 
         # Insert payment record (skip for mobile money - handled separately)
         if payment_method != "momo":
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT INTO payments
                     (sale_id, amount_paid, change_given, payment_method)
                 VALUES (?, ?, ?, ?)
-            """, (sale_id, amount_paid, change, payment_method))
+            """,
+                (sale_id, amount_paid, change, payment_method),
+            )
 
         conn.commit()
         logger.info(
@@ -179,10 +221,7 @@ def process_sale(cart: list, user_id: int, payment_method: str,
         # Deduct stock with transaction logging
         for item in cart:
             success = update_inventory(
-                item["product_id"],
-                -item["quantity"],
-                f"Sale #{sale_id}",
-                user_id
+                item["product_id"], -item["quantity"], f"Sale #{sale_id}", user_id
             )
             if not success:
                 logger.warning(
@@ -195,6 +234,7 @@ def process_sale(cart: list, user_id: int, payment_method: str,
         if customer_id:
             try:
                 from modules.customers import award_loyalty_points
+
                 pts = award_loyalty_points(customer_id, totals["total"])
                 if pts > 0:
                     logger.info(
@@ -215,8 +255,7 @@ def process_sale(cart: list, user_id: int, payment_method: str,
         conn.close()
 
 
-def void_sale(sale_id: int, user_id: int,
-              reason: str = "Voided") -> Tuple[bool, str]:
+def void_sale(sale_id: int, user_id: int, reason: str = "Voided") -> Tuple[bool, str]:
     """
     Void a sale and restore inventory.
     Only admin/manager should call this.
@@ -232,8 +271,7 @@ def void_sale(sale_id: int, user_id: int,
             return False, "Sale not found."
 
         cursor.execute(
-            "SELECT product_id, quantity FROM sale_items WHERE sale_id = ?",
-            (sale_id,)
+            "SELECT product_id, quantity FROM sale_items WHERE sale_id = ?", (sale_id,)
         )
         items = cursor.fetchall()
         conn.close()
@@ -244,15 +282,14 @@ def void_sale(sale_id: int, user_id: int,
                 item["product_id"],
                 item["quantity"],
                 f"Voided sale #{sale_id}: {reason}",
-                user_id
+                user_id,
             )
 
         # Mark as voided if column exists
         try:
             with get_db_connection() as conn:
                 conn.execute(
-                    "UPDATE sales SET status = 'voided' WHERE sale_id = ?",
-                    (sale_id,)
+                    "UPDATE sales SET status = 'voided' WHERE sale_id = ?", (sale_id,)
                 )
         except Exception:
             pass
@@ -267,12 +304,14 @@ def void_sale(sale_id: int, user_id: int,
 
 # ── Sale retrieval ─────────────────────────────────────────────────────────────
 
+
 def get_sale_details(sale_id: int) -> dict:
     """Returns full details of a sale including all items (used for receipts)."""
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute("""
+    cursor.execute(
+        """
         SELECT s.sale_id, s.sale_date, s.total_amount, s.discount,
                s.tax, s.payment_method,
                u.full_name AS cashier,
@@ -283,7 +322,9 @@ def get_sale_details(sale_id: int) -> dict:
         LEFT JOIN customers c ON s.customer_id = c.customer_id
         LEFT JOIN payments p ON s.sale_id = p.sale_id
         WHERE s.sale_id = ?
-    """, (sale_id,))
+    """,
+        (sale_id,),
+    )
     sale = cursor.fetchone()
 
     if not sale:
@@ -292,13 +333,16 @@ def get_sale_details(sale_id: int) -> dict:
 
     sale_dict = dict(sale)
 
-    cursor.execute("""
+    cursor.execute(
+        """
         SELECT si.quantity, si.unit_price, si.subtotal,
                pr.product_name, pr.barcode
         FROM sale_items si
         JOIN products pr ON si.product_id = pr.product_id
         WHERE si.sale_id = ?
-    """, (sale_id,))
+    """,
+        (sale_id,),
+    )
     sale_dict["items"] = [dict(row) for row in cursor.fetchall()]
 
     conn.close()
@@ -332,8 +376,9 @@ def get_today_sales(user_id: int = None) -> List[Dict]:
     return sales
 
 
-def get_sales_by_date(start_date: str, end_date: str = None,
-                       user_id: int = None) -> List[Dict]:
+def get_sales_by_date(
+    start_date: str, end_date: str = None, user_id: int = None
+) -> List[Dict]:
     """Get sales within a date range."""
     if end_date is None:
         end_date = start_date
@@ -361,8 +406,7 @@ def get_sales_by_date(start_date: str, end_date: str = None,
     return sales
 
 
-def get_sales_summary(start_date: str = None,
-                       end_date: str = None) -> Dict:
+def get_sales_summary(start_date: str = None, end_date: str = None) -> Dict:
     """Get summary statistics for sales."""
     conn = get_connection()
     cursor = conn.cursor()
@@ -395,8 +439,7 @@ def get_sales_summary(start_date: str = None,
     return dict(summary) if summary else {}
 
 
-def get_cashier_performance(start_date: str = None,
-                             end_date: str = None) -> List[Dict]:
+def get_cashier_performance(start_date: str = None, end_date: str = None) -> List[Dict]:
     """Get performance metrics for cashiers."""
     conn = get_connection()
     cursor = conn.cursor()
@@ -475,6 +518,7 @@ def generate_receipt(sale_id: int, store_name: str = "POS System") -> str:
 
 # ── SalesProcessor wrapper ─────────────────────────────────────────────────────
 
+
 class SalesProcessor:
     """Sales processing wrapper class."""
 
@@ -523,10 +567,10 @@ class SalesProcessor:
 if __name__ == "__main__":
     test_cart = []
     test_product = {
-        "product_id":   1,
+        "product_id": 1,
         "product_name": "Test Product",
-        "price":        10.99,
-        "stock":        5,
+        "price": 10.99,
+        "stock": 5,
     }
 
     test_cart, success, msg = cart_add_item(test_cart, test_product, 2)
