@@ -139,7 +139,7 @@ class UserManagementView(tk.Toplevel):
         # Treeview
         cols = ("ID", "Username", "Full Name", "Role", "Status", "Created")
         self.tree = ttk.Treeview(
-            left, columns=cols, show="headings", selectmode="browse", height=20
+            left, columns=cols, show="headings", selectmode="browse"
         )
 
         col_widths = {

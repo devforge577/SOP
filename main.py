@@ -35,7 +35,8 @@ class Dashboard(tk.Tk):
 
         self.title("POS System — Dashboard")
         self.geometry("680x520")
-        self.resizable(False, False)
+        self.resizable(True, True)
+        self.minsize(680, 520)
         self.configure(bg="#1a1a2e")
         self._center_window()
         self._build_ui()

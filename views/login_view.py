@@ -22,7 +22,8 @@ class LoginView(tk.Tk):
 
         self.title("POS System — Login")
         self.geometry("420x520")
-        self.resizable(False, False)
+        self.resizable(True, True)
+        self.minsize(420, 520)
         self.configure(bg="#1a1a2e")
         self._center_window()
         self._build_ui()

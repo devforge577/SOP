@@ -50,6 +50,8 @@ class CashierView(tk.Toplevel):
 
         self.title(f"POS — Cashier ({current_user['full_name']})")
         self.geometry("1280x700")
+        self.resizable(True, True)
+        self.minsize(1000, 600)
         self.configure(bg="#f0f2f5")
         self._center_window()
         self._build_ui()
@@ -226,7 +228,7 @@ class CashierView(tk.Toplevel):
 
         cols = ("Name", "Category", "Price", "Stock")
         self.product_tree = ttk.Treeview(
-            frame, columns=cols, show="headings", selectmode="browse", height=18
+            frame, columns=cols, show="headings", selectmode="browse"
         )
         col_w = {"Name": 200, "Category": 100, "Price": 80, "Stock": 60}
         for col in cols:
@@ -345,7 +347,7 @@ class CashierView(tk.Toplevel):
 
         cart_cols = ("Product", "Qty", "Unit Price", "Subtotal")
         self.cart_tree = ttk.Treeview(
-            frame, columns=cart_cols, show="headings", selectmode="browse", height=18
+            frame, columns=cart_cols, show="headings", selectmode="browse"
         )
         cart_w = {"Product": 180, "Qty": 50, "Unit Price": 90, "Subtotal": 90}
         for col in cart_cols:
@@ -378,9 +380,8 @@ class CashierView(tk.Toplevel):
     # ── Right: Payment ─────────────────────────────────────────────────────
 
     def _build_payment_panel(self, parent):
-        frame = tk.Frame(parent, bg="white", bd=0, width=280)
-        frame.pack(side="right", fill="y", padx=(6, 0))
-        frame.pack_propagate(False)
+        frame = tk.Frame(parent, bg="white", bd=0)
+        frame.pack(side="right", fill="both", expand=True, padx=(6, 0))
 
         pad = dict(padx=16)
 

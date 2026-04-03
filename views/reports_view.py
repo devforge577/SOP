@@ -36,6 +36,8 @@ class ReportsView(tk.Toplevel):
 
         self.title("Reports & Analytics")
         self.geometry("1200x720")
+        self.resizable(True, True)
+        self.minsize(1000, 600)
         self.configure(bg="#f0f2f5")
         self._center_window()
         self._build_ui()
@@ -207,7 +209,7 @@ class ReportsView(tk.Toplevel):
 
         cols = ("Method", "Transactions", "Revenue (GHS)", "Percentage")
         self.breakdown_tree = ttk.Treeview(
-            breakdown_frame, columns=cols, show="headings", height=4
+            breakdown_frame, columns=cols, show="headings"
         )
         for col in cols:
             self.breakdown_tree.heading(col, text=col)
@@ -239,7 +241,7 @@ class ReportsView(tk.Toplevel):
 
         range_cols = ("Date", "Transactions", "Revenue (GHS)", "Discounts", "Tax")
         self.range_tree = ttk.Treeview(
-            range_frame, columns=range_cols, show="headings", height=8
+            range_frame, columns=range_cols, show="headings"
         )
         for col in range_cols:
             self.range_tree.heading(col, text=col)
@@ -265,7 +267,6 @@ class ReportsView(tk.Toplevel):
             hourly_frame,
             columns=("Hour", "Transactions", "Revenue"),
             show="headings",
-            height=6,
         )
         for col, w in [("Hour", 80), ("Transactions", 100), ("Revenue", 120)]:
             self.hourly_tree.heading(col, text=col)
@@ -406,7 +407,7 @@ class ReportsView(tk.Toplevel):
             "Tax (GHS)",
         )
         self.week_tree = ttk.Treeview(
-            day_frame, columns=day_cols, show="headings", height=9
+            day_frame, columns=day_cols, show="headings"
         )
         col_w = {
             "Day": 100,
@@ -626,7 +627,7 @@ class ReportsView(tk.Toplevel):
             "Revenue (GHS)",
             "Contribution %",
         )
-        self.products_tree = ttk.Treeview(tab, columns=cols, show="headings", height=22)
+        self.products_tree = ttk.Treeview(tab, columns=cols, show="headings")
         col_w = {
             "Rank": 50,
             "Product": 280,
@@ -695,7 +696,7 @@ class ReportsView(tk.Toplevel):
             "Status",
             "Last Updated",
         )
-        self.inv_tree = ttk.Treeview(tab, columns=cols, show="headings", height=16)
+        self.inv_tree = ttk.Treeview(tab, columns=cols, show="headings")
         col_w = {
             "Product": 200,
             "Category": 110,
@@ -744,7 +745,7 @@ class ReportsView(tk.Toplevel):
             "Discount",
             "Total (GHS)",
         )
-        self.tx_tree = ttk.Treeview(tab, columns=cols, show="headings", height=20)
+        self.tx_tree = ttk.Treeview(tab, columns=cols, show="headings")
         col_w = {
             "Sale #": 60,
             "Date & Time": 150,
@@ -793,7 +794,7 @@ class ReportsView(tk.Toplevel):
             "Avg Sale",
             "Unique Customers",
         )
-        self.cashier_tree = ttk.Treeview(tab, columns=cols, show="headings", height=20)
+        self.cashier_tree = ttk.Treeview(tab, columns=cols, show="headings")
         col_w = {
             "Rank": 60,
             "Cashier": 200,
@@ -869,7 +870,7 @@ class ReportsView(tk.Toplevel):
             "Margin %",
         )
         self.profit_tree = ttk.Treeview(
-            detail_frame, columns=profit_cols, show="headings", height=12
+            detail_frame, columns=profit_cols, show="headings"
         )
         for col in profit_cols:
             self.profit_tree.heading(col, text=col)
@@ -936,7 +937,7 @@ class ReportsView(tk.Toplevel):
             "Loyalty Points",
         )
         self.cust_tree = ttk.Treeview(
-            top_cust_frame, columns=cust_cols, show="headings", height=12
+            top_cust_frame, columns=cust_cols, show="headings"
         )
         col_w = {
             "Rank": 50,

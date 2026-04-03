@@ -35,6 +35,8 @@ class ProductView(tk.Toplevel):
 
         self.title("Product Management")
         self.geometry("1100x700")
+        self.resizable(True, True)
+        self.minsize(900, 600)
         self.configure(bg="#f0f2f5")
         self._center_window()
         self._build_ui()
@@ -193,7 +195,7 @@ class ProductView(tk.Toplevel):
             "Status",
         )
         self.tree = ttk.Treeview(
-            left, columns=cols, show="headings", selectmode="browse", height=20
+            left, columns=cols, show="headings", selectmode="browse"
         )
         col_widths = {
             "ID": 40,
