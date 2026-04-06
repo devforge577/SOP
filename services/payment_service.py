@@ -51,7 +51,10 @@ class PaymentService:
             if success:
                 logger.info(
                     "User %s processed payment for sale %s (GHS %.2f) via %s",
-                    user_id, sale_id, amount_paid, payment_method,
+                    user_id,
+                    sale_id,
+                    amount_paid,
+                    payment_method,
                 )
             else:
                 logger.warning("Payment failed for sale %s: %s", sale_id, msg)
@@ -160,6 +163,7 @@ class PaymentService:
 
 # ── Convenience functions ─────────────────────────────────────────────────────
 
+
 def process_cash_checkout(
     user_id: int, amount_paid: float, total_amount: float, sale_id: int
 ) -> Tuple[bool, Optional[str], float, str]:
@@ -204,6 +208,7 @@ def process_momo_checkout(
     # 2. Initiate Paystack charge
     try:
         from utils.momo_payments import initiate_momo_payment
+
         success, ref, momo_msg = initiate_momo_payment(
             phone=phone_number,
             amount=total_amount,

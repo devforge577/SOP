@@ -27,7 +27,9 @@ logger = logging.getLogger(__name__)
 class CashierView(tk.Toplevel):
     TAX_RATE = 0.0
 
-    def __init__(self, parent, current_user: dict, product_manager=None, sales_processor=None):
+    def __init__(
+        self, parent, current_user: dict, product_manager=None, sales_processor=None
+    ):
         super().__init__(parent)
         self.parent = parent
         self.current_user = current_user
@@ -39,11 +41,11 @@ class CashierView(tk.Toplevel):
         self.current_customer_name = None
 
         # MoMo state — stored so we can resend if customer abandons
-        self._last_momo_ref      = ""
-        self._last_momo_phone    = ""
+        self._last_momo_ref = ""
+        self._last_momo_phone = ""
         self._last_momo_provider = ""
-        self._last_momo_amount   = 0.0
-        self._last_momo_sale_id  = None
+        self._last_momo_amount = 0.0
+        self._last_momo_sale_id = None
 
         self.title(f"POS — Cashier ({current_user['full_name']})")
         self.geometry("1280x700")
@@ -66,30 +68,59 @@ class CashierView(tk.Toplevel):
         topbar = tk.Frame(self, bg="#1a1a2e", pady=10)
         topbar.pack(fill="x")
 
-        tk.Label(topbar, text="  🛒  Point of Sale",
-                 font=("Segoe UI", 14, "bold"), bg="#1a1a2e", fg="white").pack(side="left", padx=10)
+        tk.Label(
+            topbar,
+            text="  🛒  Point of Sale",
+            font=("Segoe UI", 14, "bold"),
+            bg="#1a1a2e",
+            fg="white",
+        ).pack(side="left", padx=10)
 
         quick_actions = tk.Frame(topbar, bg="#1a1a2e")
         quick_actions.pack(side="left", padx=20)
 
-        tk.Button(quick_actions, text="📱 Scan Barcode", font=("Segoe UI", 9),
-                  bg="#0f3460", fg="white", relief="flat", cursor="hand2",
-                  command=self._barcode_dialog).pack(side="left", padx=2)
+        tk.Button(
+            quick_actions,
+            text="📱 Scan Barcode",
+            font=("Segoe UI", 9),
+            bg="#0f3460",
+            fg="white",
+            relief="flat",
+            cursor="hand2",
+            command=self._barcode_dialog,
+        ).pack(side="left", padx=2)
 
-        tk.Button(quick_actions, text="👤 Add Customer", font=("Segoe UI", 9),
-                  bg="#0f3460", fg="white", relief="flat", cursor="hand2",
-                  command=self._add_customer_dialog).pack(side="left", padx=2)
+        tk.Button(
+            quick_actions,
+            text="👤 Add Customer",
+            font=("Segoe UI", 9),
+            bg="#0f3460",
+            fg="white",
+            relief="flat",
+            cursor="hand2",
+            command=self._add_customer_dialog,
+        ).pack(side="left", padx=2)
 
         info_frame = tk.Frame(topbar, bg="#1a1a2e")
         info_frame.pack(side="right", padx=10)
 
-        tk.Label(info_frame, text=f"Cashier: {self.current_user['full_name']}",
-                 font=("Segoe UI", 9), bg="#1a1a2e", fg="#8892b0").pack(side="right")
+        tk.Label(
+            info_frame,
+            text=f"Cashier: {self.current_user['full_name']}",
+            font=("Segoe UI", 9),
+            bg="#1a1a2e",
+            fg="#8892b0",
+        ).pack(side="right")
 
         self.time_var = tk.StringVar()
         self._update_time()
-        tk.Label(info_frame, textvariable=self.time_var, font=("Segoe UI", 9),
-                 bg="#1a1a2e", fg="#8892b0").pack(side="left", padx=10)
+        tk.Label(
+            info_frame,
+            textvariable=self.time_var,
+            font=("Segoe UI", 9),
+            bg="#1a1a2e",
+            fg="#8892b0",
+        ).pack(side="left", padx=10)
 
         body = tk.Frame(self, bg="#f0f2f5")
         body.pack(fill="both", expand=True, padx=12, pady=10)
@@ -102,11 +133,21 @@ class CashierView(tk.Toplevel):
     def _build_status_bar(self):
         self.status_bar = tk.Frame(self, bg="#1a1a2e", height=25)
         self.status_bar.pack(fill="x", side="bottom")
-        self.status_label = tk.Label(self.status_bar, text="Ready",
-                                      font=("Segoe UI", 8), bg="#1a1a2e", fg="#8892b0")
+        self.status_label = tk.Label(
+            self.status_bar,
+            text="Ready",
+            font=("Segoe UI", 8),
+            bg="#1a1a2e",
+            fg="#8892b0",
+        )
         self.status_label.pack(side="left", padx=5, pady=2)
-        self.cart_count_label = tk.Label(self.status_bar, text="Items: 0",
-                                          font=("Segoe UI", 8), bg="#1a1a2e", fg="#8892b0")
+        self.cart_count_label = tk.Label(
+            self.status_bar,
+            text="Items: 0",
+            font=("Segoe UI", 8),
+            bg="#1a1a2e",
+            fg="#8892b0",
+        )
         self.cart_count_label.pack(side="right", padx=5, pady=2)
 
     def _update_time(self):
@@ -125,36 +166,65 @@ class CashierView(tk.Toplevel):
         frame = tk.Frame(parent, bg="white", bd=0, relief="flat")
         frame.pack(side="left", fill="both", expand=True, padx=(0, 6))
 
-        tk.Label(frame, text="Products", font=("Segoe UI", 11, "bold"),
-                 bg="white", fg="#1a1a2e").pack(anchor="w", padx=12, pady=(10, 4))
+        tk.Label(
+            frame,
+            text="Products",
+            font=("Segoe UI", 11, "bold"),
+            bg="white",
+            fg="#1a1a2e",
+        ).pack(anchor="w", padx=12, pady=(10, 4))
 
         search_row = tk.Frame(frame, bg="white")
         search_row.pack(fill="x", padx=12, pady=(0, 6))
 
         self.search_var = tk.StringVar()
-        self.search_entry = tk.Entry(search_row, textvariable=self.search_var,
-                                      font=("Segoe UI", 12), relief="flat", bd=3, bg="#f7f8fa")
+        self.search_entry = tk.Entry(
+            search_row,
+            textvariable=self.search_var,
+            font=("Segoe UI", 12),
+            relief="flat",
+            bd=3,
+            bg="#f7f8fa",
+        )
         self.search_entry.pack(side="left", fill="x", expand=True, ipady=8)
         self.search_entry.bind("<Return>", lambda e: self._search_products())
         self.search_entry.bind("<KeyRelease>", lambda e: self._live_search())
         self.search_entry.focus()
 
-        tk.Button(search_row, text="Search", font=("Segoe UI", 10),
-                  bg="#e94560", fg="white", relief="flat", cursor="hand2",
-                  command=self._search_products).pack(side="left", padx=(6, 0), ipady=8, ipadx=6)
+        tk.Button(
+            search_row,
+            text="Search",
+            font=("Segoe UI", 10),
+            bg="#e94560",
+            fg="white",
+            relief="flat",
+            cursor="hand2",
+            command=self._search_products,
+        ).pack(side="left", padx=(6, 0), ipady=8, ipadx=6)
 
         filter_row = tk.Frame(frame, bg="white")
         filter_row.pack(fill="x", padx=12, pady=(0, 6))
-        tk.Label(filter_row, text="Category:", bg="white", font=("Segoe UI", 9)).pack(side="left")
+        tk.Label(filter_row, text="Category:", bg="white", font=("Segoe UI", 9)).pack(
+            side="left"
+        )
         self.category_var = tk.StringVar(value="All")
-        self.category_combo = ttk.Combobox(filter_row, textvariable=self.category_var,
-                                            values=["All"], state="readonly", width=15)
+        self.category_combo = ttk.Combobox(
+            filter_row,
+            textvariable=self.category_var,
+            values=["All"],
+            state="readonly",
+            width=15,
+        )
         self.category_combo.pack(side="left", padx=5)
-        self.category_combo.bind("<<ComboboxSelected>>", lambda e: self._search_products())
+        self.category_combo.bind(
+            "<<ComboboxSelected>>", lambda e: self._search_products()
+        )
         self._load_categories()
 
         cols = ("Name", "Category", "Price", "Stock")
-        self.product_tree = ttk.Treeview(frame, columns=cols, show="headings", selectmode="browse")
+        self.product_tree = ttk.Treeview(
+            frame, columns=cols, show="headings", selectmode="browse"
+        )
         col_w = {"Name": 200, "Category": 100, "Price": 80, "Stock": 60}
         for col in cols:
             self.product_tree.heading(col, text=col)
@@ -165,7 +235,9 @@ class CashierView(tk.Toplevel):
 
         sb = ttk.Scrollbar(frame, orient="vertical", command=self.product_tree.yview)
         self.product_tree.configure(yscrollcommand=sb.set)
-        self.product_tree.pack(side="left", fill="both", expand=True, padx=(12, 0), pady=(0, 10))
+        self.product_tree.pack(
+            side="left", fill="both", expand=True, padx=(12, 0), pady=(0, 10)
+        )
         sb.pack(side="left", fill="y", pady=(0, 10))
 
         self.product_tree.bind("<Double-1>", self._on_product_double_click)
@@ -175,6 +247,7 @@ class CashierView(tk.Toplevel):
     def _load_categories(self):
         try:
             from modules.products import get_categories
+
             self.category_combo["values"] = ["All"] + get_categories()
         except Exception as e:
             logger.error("Error loading categories: %s", e)
@@ -185,9 +258,11 @@ class CashierView(tk.Toplevel):
 
         if not keyword and category == "All":
             from modules.products import get_all_products
+
             products = get_all_products()
         elif not keyword:
             from modules.products import get_products_by_category
+
             products = get_products_by_category(category)
         else:
             products = search_products(keyword)
@@ -196,11 +271,25 @@ class CashierView(tk.Toplevel):
 
         self.product_tree.delete(*self.product_tree.get_children())
         for p in products:
-            tag = "out_of_stock" if p["stock"] == 0 else \
-                  "low_stock" if p["stock"] <= p.get("low_stock_alert", 5) else ""
-            self.product_tree.insert("", "end", iid=str(p["product_id"]), tags=(tag,),
-                                     values=(p["product_name"], p["category"],
-                                             f"GHS {p['price']:.2f}", p["stock"]))
+            tag = (
+                "out_of_stock"
+                if p["stock"] == 0
+                else "low_stock"
+                if p["stock"] <= p.get("low_stock_alert", 5)
+                else ""
+            )
+            self.product_tree.insert(
+                "",
+                "end",
+                iid=str(p["product_id"]),
+                tags=(tag,),
+                values=(
+                    p["product_name"],
+                    p["category"],
+                    f"GHS {p['price']:.2f}",
+                    p["stock"],
+                ),
+            )
 
     def _live_search(self):
         self._search_products()
@@ -220,19 +309,38 @@ class CashierView(tk.Toplevel):
         header_row = tk.Frame(frame, bg="white")
         header_row.pack(fill="x", padx=12, pady=(10, 4))
 
-        tk.Label(header_row, text="Cart", font=("Segoe UI", 11, "bold"),
-                 bg="white", fg="#1a1a2e").pack(side="left")
+        tk.Label(
+            header_row,
+            text="Cart",
+            font=("Segoe UI", 11, "bold"),
+            bg="white",
+            fg="#1a1a2e",
+        ).pack(side="left")
 
-        self.customer_label = tk.Label(header_row, text="Customer: Walk-in",
-                                        font=("Segoe UI", 9), bg="white", fg="#e94560")
+        self.customer_label = tk.Label(
+            header_row,
+            text="Customer: Walk-in",
+            font=("Segoe UI", 9),
+            bg="white",
+            fg="#e94560",
+        )
         self.customer_label.pack(side="left", padx=10)
 
-        tk.Button(header_row, text="🗑 Clear Cart", font=("Segoe UI", 9), relief="flat",
-                  bg="#e74c3c", fg="white", cursor="hand2",
-                  command=self._clear_cart).pack(side="right")
+        tk.Button(
+            header_row,
+            text="🗑 Clear Cart",
+            font=("Segoe UI", 9),
+            relief="flat",
+            bg="#e74c3c",
+            fg="white",
+            cursor="hand2",
+            command=self._clear_cart,
+        ).pack(side="right")
 
         cart_cols = ("Product", "Qty", "Unit Price", "Subtotal")
-        self.cart_tree = ttk.Treeview(frame, columns=cart_cols, show="headings", selectmode="browse")
+        self.cart_tree = ttk.Treeview(
+            frame, columns=cart_cols, show="headings", selectmode="browse"
+        )
         cart_w = {"Product": 180, "Qty": 50, "Unit Price": 90, "Subtotal": 90}
         for col in cart_cols:
             self.cart_tree.heading(col, text=col)
@@ -241,14 +349,18 @@ class CashierView(tk.Toplevel):
 
         cart_sb = ttk.Scrollbar(frame, orient="vertical", command=self.cart_tree.yview)
         self.cart_tree.configure(yscrollcommand=cart_sb.set)
-        self.cart_tree.pack(side="left", fill="both", expand=True, padx=(12, 0), pady=(0, 10))
+        self.cart_tree.pack(
+            side="left", fill="both", expand=True, padx=(12, 0), pady=(0, 10)
+        )
         cart_sb.pack(side="left", fill="y", pady=(0, 10))
 
         self.cart_menu = tk.Menu(self, tearoff=0)
         self.cart_menu.add_command(label="➕  Increase qty", command=self._increase_qty)
         self.cart_menu.add_command(label="➖  Decrease qty", command=self._decrease_qty)
         self.cart_menu.add_separator()
-        self.cart_menu.add_command(label="🗑  Remove item", command=self._remove_from_cart)
+        self.cart_menu.add_command(
+            label="🗑  Remove item", command=self._remove_from_cart
+        )
         self.cart_tree.bind("<Button-3>", self._show_cart_menu)
 
     def _show_cart_menu(self, event):
@@ -282,12 +394,18 @@ class CashierView(tk.Toplevel):
 
         def _on_mousewheel(event):
             canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+
         canvas.bind_all("<MouseWheel>", _on_mousewheel)
 
         pad = dict(padx=16)
 
-        tk.Label(frame, text="Payment", font=("Segoe UI", 11, "bold"),
-                 bg="white", fg="#1a1a2e").pack(anchor="w", pady=(12, 8), **pad)
+        tk.Label(
+            frame,
+            text="Payment",
+            font=("Segoe UI", 11, "bold"),
+            bg="white",
+            fg="#1a1a2e",
+        ).pack(anchor="w", pady=(12, 8), **pad)
 
         totals_frame = tk.Frame(frame, bg="#f7f8fa", pady=10)
         totals_frame.pack(fill="x", padx=12, pady=(0, 10))
@@ -298,7 +416,9 @@ class CashierView(tk.Toplevel):
             font = ("Segoe UI", 13, "bold") if big else ("Segoe UI", 10)
             fg = "#e94560" if big else "#555"
             tk.Label(row, text=label, font=font, bg="#f7f8fa", fg=fg).pack(side="left")
-            tk.Label(row, textvariable=var, font=font, bg="#f7f8fa", fg=fg).pack(side="right")
+            tk.Label(row, textvariable=var, font=font, bg="#f7f8fa", fg=fg).pack(
+                side="right"
+            )
 
         self.subtotal_var = tk.StringVar(value="GHS 0.00")
         self.discount_var = tk.StringVar(value="GHS 0.00")
@@ -311,34 +431,59 @@ class CashierView(tk.Toplevel):
         ttk.Separator(totals_frame).pack(fill="x", padx=10, pady=4)
         total_row("TOTAL", self.total_var, big=True)
 
-        tk.Label(frame, text="Discount (GHS)", font=("Segoe UI", 9, "bold"),
-                 bg="white", fg="#333").pack(anchor="w", **pad)
+        tk.Label(
+            frame,
+            text="Discount (GHS)",
+            font=("Segoe UI", 9, "bold"),
+            bg="white",
+            fg="#333",
+        ).pack(anchor="w", **pad)
         self.discount_entry_var = tk.StringVar(value="0")
-        tk.Entry(frame, textvariable=self.discount_entry_var, font=("Segoe UI", 11),
-                 relief="flat", bd=3, bg="#f7f8fa").pack(fill="x", ipady=6, pady=(2, 10), **pad)
+        tk.Entry(
+            frame,
+            textvariable=self.discount_entry_var,
+            font=("Segoe UI", 11),
+            relief="flat",
+            bd=3,
+            bg="#f7f8fa",
+        ).pack(fill="x", ipady=6, pady=(2, 10), **pad)
         self.discount_entry_var.trace("w", lambda *a: self._refresh_totals())
 
-        tk.Label(frame, text="Payment Method", font=("Segoe UI", 9, "bold"),
-                 bg="white", fg="#333").pack(anchor="w", **pad)
+        tk.Label(
+            frame,
+            text="Payment Method",
+            font=("Segoe UI", 9, "bold"),
+            bg="white",
+            fg="#333",
+        ).pack(anchor="w", **pad)
         self.payment_var = tk.StringVar(value="cash")
         for text, val, color in [
             ("💵  Cash", "cash", "#27ae60"),
             ("📱  Mobile Money (MoMo)", "momo", "#f5a623"),
             ("💳  Card", "card", "#2980b9"),
         ]:
-            rb = tk.Radiobutton(frame, text=text, variable=self.payment_var, value=val,
-                                font=("Segoe UI", 10), bg="white", cursor="hand2",
-                                activebackground="white", fg=color, selectcolor="white")
+            rb = tk.Radiobutton(
+                frame,
+                text=text,
+                variable=self.payment_var,
+                value=val,
+                font=("Segoe UI", 10),
+                bg="white",
+                cursor="hand2",
+                activebackground="white",
+                fg=color,
+                selectcolor="white",
+            )
             rb.pack(anchor="w", padx=20, pady=2)
 
         self.momo_frame = tk.Frame(frame, bg="#fffbf0", relief="flat", bd=1)
 
         self.momo_provider_var = tk.StringVar(value="Auto-detect")
         providers = [
-            ("Auto-detect",  "auto"),
-            ("MTN MoMo",     "mtn"),
+            ("Auto-detect", "auto"),
+            ("MTN MoMo", "mtn"),
             ("Telecel Cash", "telecel"),
-            ("AirtelTigo",   "airteltigo"),
+            ("AirtelTigo", "airteltigo"),
         ]
         self._provider_keys = {p[0]: p[1] for p in providers}
         self.momo_phone_var = tk.StringVar()
@@ -349,51 +494,100 @@ class CashierView(tk.Toplevel):
         self.payment_var.trace("w", self._on_payment_method_change)
         self.momo_frame.pack_forget()
 
-        self._amount_label = tk.Label(frame, text="Amount Paid (GHS)", font=("Segoe UI", 9, "bold"),
-                 bg="white", fg="#333")
+        self._amount_label = tk.Label(
+            frame,
+            text="Amount Paid (GHS)",
+            font=("Segoe UI", 9, "bold"),
+            bg="white",
+            fg="#333",
+        )
         self._amount_label.pack(anchor="w", pady=(10, 0), **pad)
         self.amount_paid_var = tk.StringVar(value="0")
-        self.amount_entry = tk.Entry(frame, textvariable=self.amount_paid_var,
-                                      font=("Segoe UI", 13, "bold"), relief="flat", bd=3, bg="#f7f8fa")
+        self.amount_entry = tk.Entry(
+            frame,
+            textvariable=self.amount_paid_var,
+            font=("Segoe UI", 13, "bold"),
+            relief="flat",
+            bd=3,
+            bg="#f7f8fa",
+        )
         self.amount_entry.pack(fill="x", ipady=8, pady=(2, 4), **pad)
         self.amount_entry.bind("<KeyRelease>", lambda e: self._refresh_totals())
 
         self.change_var = tk.StringVar(value="Change: GHS 0.00")
-        tk.Label(frame, textvariable=self.change_var, font=("Segoe UI", 10, "bold"),
-                 bg="white", fg="#27ae60").pack(anchor="w", **pad)
+        tk.Label(
+            frame,
+            textvariable=self.change_var,
+            font=("Segoe UI", 10, "bold"),
+            bg="white",
+            fg="#27ae60",
+        ).pack(anchor="w", **pad)
 
-        tk.Button(frame, text="✔  CHARGE", font=("Segoe UI", 13, "bold"),
-                  relief="flat", bg="#e94560", fg="white", cursor="hand2", pady=12,
-                  command=self._charge).pack(fill="x", padx=12, pady=(16, 6))
+        tk.Button(
+            frame,
+            text="✔  CHARGE",
+            font=("Segoe UI", 13, "bold"),
+            relief="flat",
+            bg="#e94560",
+            fg="white",
+            cursor="hand2",
+            pady=12,
+            command=self._charge,
+        ).pack(fill="x", padx=12, pady=(16, 6))
 
         receipt_frame = tk.Frame(frame, bg="white")
         receipt_frame.pack(fill="x", padx=12, pady=4)
 
-        self.receipt_btn = tk.Button(receipt_frame, text="🖨  View Receipt",
-                                      font=("Segoe UI", 10), relief="flat",
-                                      bg="#0f3460", fg="white", cursor="hand2",
-                                      pady=8, state="disabled", command=self._show_receipt)
+        self.receipt_btn = tk.Button(
+            receipt_frame,
+            text="🖨  View Receipt",
+            font=("Segoe UI", 10),
+            relief="flat",
+            bg="#0f3460",
+            fg="white",
+            cursor="hand2",
+            pady=8,
+            state="disabled",
+            command=self._show_receipt,
+        )
         self.receipt_btn.pack(side="left", fill="x", expand=True, padx=(0, 4))
 
-        self.save_receipt_btn = tk.Button(receipt_frame, text="💾 Save",
-                                           font=("Segoe UI", 10), relief="flat",
-                                           bg="#1b4332", fg="white", cursor="hand2",
-                                           pady=8, state="disabled",
-                                           command=self._save_receipt_to_file)
+        self.save_receipt_btn = tk.Button(
+            receipt_frame,
+            text="💾 Save",
+            font=("Segoe UI", 10),
+            relief="flat",
+            bg="#1b4332",
+            fg="white",
+            cursor="hand2",
+            pady=8,
+            state="disabled",
+            command=self._save_receipt_to_file,
+        )
         self.save_receipt_btn.pack(side="left")
 
         quick_amounts = tk.Frame(frame, bg="white")
         quick_amounts.pack(fill="x", padx=12, pady=5)
         for amount in [20, 50, 100, 200]:
-            tk.Button(quick_amounts, text=f"GHS {amount}", font=("Segoe UI", 8),
-                      relief="flat", bg="#f0f2f5", fg="#333",
-                      command=lambda a=amount: self._set_amount_paid(a)).pack(
-                          side="left", padx=2, expand=True, fill="x")
+            tk.Button(
+                quick_amounts,
+                text=f"GHS {amount}",
+                font=("Segoe UI", 8),
+                relief="flat",
+                bg="#f0f2f5",
+                fg="#333",
+                command=lambda a=amount: self._set_amount_paid(a),
+            ).pack(side="left", padx=2, expand=True, fill="x")
 
         self.pay_msg_var = tk.StringVar()
-        self.pay_msg_label = tk.Label(frame, textvariable=self.pay_msg_var,
-                                       font=("Segoe UI", 9), bg="white",
-                                       fg="#e74c3c", wraplength=240)
+        self.pay_msg_label = tk.Label(
+            frame,
+            textvariable=self.pay_msg_var,
+            font=("Segoe UI", 9),
+            bg="white",
+            fg="#e74c3c",
+            wraplength=240,
+        )
         self.pay_msg_label.pack(pady=(8, 0), **pad)
 
     # ── MoMo helpers ──────────────────────────────────────────────────────────
@@ -401,12 +595,14 @@ class CashierView(tk.Toplevel):
     def _on_phone_change(self, *args):
         try:
             from utils.momo_payments import validate_ghana_phone, MOMO_PROVIDERS
+
             phone = self.momo_phone_var.get()
             valid, normalized, provider = validate_ghana_phone(phone)
             if valid and provider:
                 cfg = MOMO_PROVIDERS[provider]
                 self.provider_badge.config(
-                    text=f"✓ Detected: {cfg['name']}", fg=cfg["color"])
+                    text=f"✓ Detected: {cfg['name']}", fg=cfg["color"]
+                )
                 display = next(
                     (k for k, v in self._provider_keys.items() if v == provider),
                     "Auto-detect",
@@ -419,8 +615,9 @@ class CashierView(tk.Toplevel):
 
     def _on_payment_method_change(self, *args):
         if self.payment_var.get() == "momo":
-            self.momo_frame.pack(fill="x", padx=12, pady=(0, 6),
-                                 before=self._amount_label)
+            self.momo_frame.pack(
+                fill="x", padx=12, pady=(0, 6), before=self._amount_label
+            )
         else:
             self.momo_frame.pack_forget()
             self.momo_phone_var.set("")
@@ -428,20 +625,25 @@ class CashierView(tk.Toplevel):
             self._last_momo_ref = ""
             self.verify_btn.config(state="disabled")
 
-    def _show_momo_waiting_state(self, sale_id, phone, provider_name, amount, provider_key=""):
+    def _show_momo_waiting_state(
+        self, sale_id, phone, provider_name, amount, provider_key=""
+    ):
         """Replace MoMo input panel with a compact waiting-for-approval state."""
         # Store details so we can resend if the customer abandons
-        self._last_momo_phone    = phone
+        self._last_momo_phone = phone
         self._last_momo_provider = provider_key
-        self._last_momo_amount   = amount
-        self._last_momo_sale_id  = sale_id
+        self._last_momo_amount = amount
+        self._last_momo_sale_id = sale_id
 
         for widget in self.momo_frame.winfo_children():
             widget.destroy()
 
         tk.Label(
-            self.momo_frame, text="⏳  Awaiting Customer Approval",
-            font=("Segoe UI", 10, "bold"), bg="#fffbf0", fg="#8a6000",
+            self.momo_frame,
+            text="⏳  Awaiting Customer Approval",
+            font=("Segoe UI", 10, "bold"),
+            bg="#fffbf0",
+            fg="#8a6000",
         ).pack(anchor="w", padx=10, pady=(10, 4))
 
         info = (
@@ -451,44 +653,62 @@ class CashierView(tk.Toplevel):
             f"Sale #:   {sale_id}"
         )
         tk.Label(
-            self.momo_frame, text=info,
-            font=("Segoe UI", 9), bg="#fffbf0", fg="#333",
+            self.momo_frame,
+            text=info,
+            font=("Segoe UI", 9),
+            bg="#fffbf0",
+            fg="#333",
             justify="left",
         ).pack(anchor="w", padx=10, pady=(0, 6))
 
         tk.Label(
             self.momo_frame,
             text="💡 Ask customer to approve the prompt on their phone.",
-            font=("Segoe UI", 7), bg="#fffbf0", fg="#888", wraplength=220,
+            font=("Segoe UI", 7),
+            bg="#fffbf0",
+            fg="#888",
+            wraplength=220,
         ).pack(anchor="w", padx=10, pady=(0, 6))
 
         btn_row = tk.Frame(self.momo_frame, bg="#fffbf0")
         btn_row.pack(fill="x", padx=10, pady=(0, 4))
 
         self.verify_btn = tk.Button(
-            btn_row, text="✔  Verify Payment",
-            font=("Segoe UI", 10, "bold"), relief="flat",
-            bg="#27ae60", fg="white", cursor="hand2", pady=8,
+            btn_row,
+            text="✔  Verify Payment",
+            font=("Segoe UI", 10, "bold"),
+            relief="flat",
+            bg="#27ae60",
+            fg="white",
+            cursor="hand2",
+            pady=8,
             command=self._verify_momo_payment,
         )
         self.verify_btn.pack(side="left", fill="x", expand=True, padx=(0, 4))
 
         tk.Button(
-            btn_row, text="↺  Resend",
-            font=("Segoe UI", 9), relief="flat",
-            bg="#f39c12", fg="white", cursor="hand2",
+            btn_row,
+            text="↺  Resend",
+            font=("Segoe UI", 9),
+            relief="flat",
+            bg="#f39c12",
+            fg="white",
+            cursor="hand2",
             command=self._resend_momo_prompt,
         ).pack(side="left")
 
         tk.Button(
-            self.momo_frame, text="✖  Cancel & New Sale",
-            font=("Segoe UI", 9), relief="flat",
-            bg="#e74c3c", fg="white", cursor="hand2",
+            self.momo_frame,
+            text="✖  Cancel & New Sale",
+            font=("Segoe UI", 9),
+            relief="flat",
+            bg="#e74c3c",
+            fg="white",
+            cursor="hand2",
             command=self._reset_momo_panel,
         ).pack(fill="x", padx=10, pady=(0, 10))
 
-        self.momo_frame.pack(fill="x", padx=12, pady=(0, 6),
-                             before=self._amount_label)
+        self.momo_frame.pack(fill="x", padx=12, pady=(0, 6), before=self._amount_label)
 
     def _reset_momo_panel(self):
         for widget in self.momo_frame.winfo_children():
@@ -496,55 +716,82 @@ class CashierView(tk.Toplevel):
         self._build_momo_panel_contents()
         self.momo_frame.pack_forget()
         self.payment_var.set("cash")
-        self._last_momo_ref      = ""
-        self._last_momo_phone    = ""
+        self._last_momo_ref = ""
+        self._last_momo_phone = ""
         self._last_momo_provider = ""
-        self._last_momo_amount   = 0.0
-        self._last_momo_sale_id  = None
+        self._last_momo_amount = 0.0
+        self._last_momo_sale_id = None
 
     def _build_momo_panel_contents(self):
-        tk.Label(self.momo_frame, text="Mobile Money Details",
-                 font=("Segoe UI", 9, "bold"), bg="#fffbf0", fg="#8a6000").pack(
-                     anchor="w", padx=10, pady=(8, 4))
+        tk.Label(
+            self.momo_frame,
+            text="Mobile Money Details",
+            font=("Segoe UI", 9, "bold"),
+            bg="#fffbf0",
+            fg="#8a6000",
+        ).pack(anchor="w", padx=10, pady=(8, 4))
 
         provider_row = tk.Frame(self.momo_frame, bg="#fffbf0")
         provider_row.pack(fill="x", padx=10, pady=(0, 6))
-        tk.Label(provider_row, text="Network:", font=("Segoe UI", 9),
-                 bg="#fffbf0", fg="#333").pack(side="left")
+        tk.Label(
+            provider_row, text="Network:", font=("Segoe UI", 9), bg="#fffbf0", fg="#333"
+        ).pack(side="left")
 
         self.provider_combo = ttk.Combobox(
             provider_row,
             textvariable=self.momo_provider_var,
             values=list(self._provider_keys.keys()),
-            state="readonly", width=14,
+            state="readonly",
+            width=14,
         )
         self.provider_combo.pack(side="left", padx=(6, 0))
         self.momo_provider_var.set("Auto-detect")
 
         self.provider_badge = tk.Label(
-            self.momo_frame, text="",
-            font=("Segoe UI", 8, "bold"), bg="#fffbf0", fg="#f5a623",
+            self.momo_frame,
+            text="",
+            font=("Segoe UI", 8, "bold"),
+            bg="#fffbf0",
+            fg="#f5a623",
         )
         self.provider_badge.pack(anchor="w", padx=10)
 
-        tk.Label(self.momo_frame, text="Customer Phone *",
-                 font=("Segoe UI", 9, "bold"), bg="#fffbf0", fg="#333").pack(
-                     anchor="w", padx=10, pady=(4, 2))
-        phone_entry = tk.Entry(self.momo_frame, textvariable=self.momo_phone_var,
-                               font=("Segoe UI", 12), relief="flat", bd=3, bg="white")
+        tk.Label(
+            self.momo_frame,
+            text="Customer Phone *",
+            font=("Segoe UI", 9, "bold"),
+            bg="#fffbf0",
+            fg="#333",
+        ).pack(anchor="w", padx=10, pady=(4, 2))
+        phone_entry = tk.Entry(
+            self.momo_frame,
+            textvariable=self.momo_phone_var,
+            font=("Segoe UI", 12),
+            relief="flat",
+            bd=3,
+            bg="white",
+        )
         phone_entry.pack(fill="x", ipady=7, padx=10, pady=(0, 4))
 
         tk.Label(
             self.momo_frame,
             text="💡 Customer will receive a MoMo prompt on their phone to approve.",
-            font=("Segoe UI", 7), bg="#fffbf0", fg="#888", wraplength=220,
+            font=("Segoe UI", 7),
+            bg="#fffbf0",
+            fg="#888",
+            wraplength=220,
         ).pack(anchor="w", padx=10, pady=(0, 8))
 
         self.verify_btn = tk.Button(
-            self.momo_frame, text="✔ Verify Payment",
-            font=("Segoe UI", 9), relief="flat",
-            bg="#27ae60", fg="white", cursor="hand2",
-            command=self._verify_momo_payment, state="disabled",
+            self.momo_frame,
+            text="✔ Verify Payment",
+            font=("Segoe UI", 9),
+            relief="flat",
+            bg="#27ae60",
+            fg="white",
+            cursor="hand2",
+            command=self._verify_momo_payment,
+            state="disabled",
         )
         self.verify_btn.pack(fill="x", padx=10, pady=(0, 8))
 
@@ -555,6 +802,7 @@ class CashierView(tk.Toplevel):
             return
         try:
             from utils.momo_payments import verify_momo_payment
+
             success, status, msg = verify_momo_payment(self._last_momo_ref)
 
             if success:
@@ -604,6 +852,7 @@ class CashierView(tk.Toplevel):
             return
         try:
             from utils.momo_payments import initiate_momo_payment
+
             success, ref, momo_msg = initiate_momo_payment(
                 phone=self._last_momo_phone,
                 amount=self._last_momo_amount,
@@ -612,7 +861,9 @@ class CashierView(tk.Toplevel):
             )
             if success:
                 self._last_momo_ref = ref
-                self._pay_msg("Prompt resent. Ask the customer to approve.", error=False)
+                self._pay_msg(
+                    "Prompt resent. Ask the customer to approve.", error=False
+                )
             else:
                 self._pay_msg(f"Resend failed: {momo_msg}", error=True)
         except Exception as e:
@@ -658,7 +909,9 @@ class CashierView(tk.Toplevel):
         for item in self.cart:
             if item["product_id"] == product_id:
                 new_qty = item["quantity"] + delta
-                self.cart, ok, msg = cart_update_quantity(self.cart, product_id, new_qty)
+                self.cart, ok, msg = cart_update_quantity(
+                    self.cart, product_id, new_qty
+                )
                 if not ok:
                     self._pay_msg(msg, error=True)
                 self._refresh_cart_tree()
@@ -682,10 +935,17 @@ class CashierView(tk.Toplevel):
     def _refresh_cart_tree(self):
         self.cart_tree.delete(*self.cart_tree.get_children())
         for item in self.cart:
-            self.cart_tree.insert("", "end", iid=str(item["product_id"]),
-                                   values=(item["product_name"], item["quantity"],
-                                           f"GHS {item['unit_price']:.2f}",
-                                           f"GHS {item['subtotal']:.2f}"))
+            self.cart_tree.insert(
+                "",
+                "end",
+                iid=str(item["product_id"]),
+                values=(
+                    item["product_name"],
+                    item["quantity"],
+                    f"GHS {item['unit_price']:.2f}",
+                    f"GHS {item['subtotal']:.2f}",
+                ),
+            )
 
     def _refresh_totals(self):
         try:
@@ -702,8 +962,11 @@ class CashierView(tk.Toplevel):
         try:
             paid = float(self.amount_paid_var.get())
             change = paid - totals["total"]
-            self.change_var.set(f"Change: GHS {change:.2f}" if change >= 0
-                                else f"Short: GHS {abs(change):.2f}")
+            self.change_var.set(
+                f"Change: GHS {change:.2f}"
+                if change >= 0
+                else f"Short: GHS {abs(change):.2f}"
+            )
         except ValueError:
             self.change_var.set("Change: GHS 0.00")
 
@@ -732,7 +995,9 @@ class CashierView(tk.Toplevel):
             amount_paid = totals["total"]
 
         if amount_paid < totals["total"]:
-            self._pay_msg(f"Insufficient payment. Total: GHS {totals['total']:.2f}", error=True)
+            self._pay_msg(
+                f"Insufficient payment. Total: GHS {totals['total']:.2f}", error=True
+            )
             return
 
         # ── MoMo ──────────────────────────────────────────────────────────
@@ -744,6 +1009,7 @@ class CashierView(tk.Toplevel):
 
             try:
                 from utils.momo_payments import validate_ghana_phone, MOMO_PROVIDERS
+
                 valid, normalized, detected = validate_ghana_phone(phone)
                 if not valid:
                     self._pay_msg(
@@ -759,7 +1025,8 @@ class CashierView(tk.Toplevel):
 
                 if not provider_key:
                     self._pay_msg(
-                        "Could not detect network. Select provider manually.", error=True
+                        "Could not detect network. Select provider manually.",
+                        error=True,
                     )
                     return
 
@@ -773,7 +1040,7 @@ class CashierView(tk.Toplevel):
                 f"Network:  {provider_name}\n"
                 f"Phone:    {normalized}\n"
                 f"Amount:   GHS {totals['total']:.2f}\n\n"
-                f"Send payment prompt to customer's phone?"
+                f"Send payment prompt to customer's phone?",
             )
             if not confirm:
                 return
@@ -793,6 +1060,7 @@ class CashierView(tk.Toplevel):
 
             try:
                 from utils.momo_payments import initiate_momo_payment
+
                 success, ref, momo_msg = initiate_momo_payment(
                     phone=normalized,
                     amount=totals["total"],
@@ -894,8 +1162,9 @@ class CashierView(tk.Toplevel):
         text_frame = tk.Frame(win, bg="white")
         text_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
-        text = tk.Text(text_frame, font=("Courier New", 9), bg="white",
-                       relief="flat", wrap="word")
+        text = tk.Text(
+            text_frame, font=("Courier New", 9), bg="white", relief="flat", wrap="word"
+        )
         text.pack(side="left", fill="both", expand=True)
 
         scrollbar = ttk.Scrollbar(text_frame, orient="vertical", command=text.yview)
@@ -907,26 +1176,57 @@ class CashierView(tk.Toplevel):
         btn_frame = tk.Frame(win, bg="white")
         btn_frame.pack(fill="x", pady=8, padx=10)
 
-        tk.Button(btn_frame, text="🖨  Print", relief="flat", bg="#0f3460", fg="white",
-                  font=("Segoe UI", 10), width=10,
-                  command=lambda: self._print_receipt(receipt_text)).pack(side="left", padx=(0, 6))
+        tk.Button(
+            btn_frame,
+            text="🖨  Print",
+            relief="flat",
+            bg="#0f3460",
+            fg="white",
+            font=("Segoe UI", 10),
+            width=10,
+            command=lambda: self._print_receipt(receipt_text),
+        ).pack(side="left", padx=(0, 6))
 
-        tk.Button(btn_frame, text="💾  Save to File", relief="flat", bg="#1b4332", fg="white",
-                  font=("Segoe UI", 10), width=12,
-                  command=lambda: self._save_receipt_dialog(receipt_text)).pack(side="left", padx=(0, 6))
+        tk.Button(
+            btn_frame,
+            text="💾  Save to File",
+            relief="flat",
+            bg="#1b4332",
+            fg="white",
+            font=("Segoe UI", 10),
+            width=12,
+            command=lambda: self._save_receipt_dialog(receipt_text),
+        ).pack(side="left", padx=(0, 6))
 
-        tk.Button(btn_frame, text="📋  Copy", relief="flat", bg="#444", fg="white",
-                  font=("Segoe UI", 10), width=8,
-                  command=lambda: self._copy_receipt(receipt_text)).pack(side="left", padx=(0, 6))
+        tk.Button(
+            btn_frame,
+            text="📋  Copy",
+            relief="flat",
+            bg="#444",
+            fg="white",
+            font=("Segoe UI", 10),
+            width=8,
+            command=lambda: self._copy_receipt(receipt_text),
+        ).pack(side="left", padx=(0, 6))
 
-        tk.Button(btn_frame, text="Close", relief="flat", bg="#e94560", fg="white",
-                  font=("Segoe UI", 10), width=8,
-                  command=win.destroy).pack(side="right")
+        tk.Button(
+            btn_frame,
+            text="Close",
+            relief="flat",
+            bg="#e94560",
+            fg="white",
+            font=("Segoe UI", 10),
+            width=8,
+            command=win.destroy,
+        ).pack(side="right")
 
     def _print_receipt(self, receipt_text: str):
         try:
             import sys
-            tmp = tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False, encoding="utf-8")
+
+            tmp = tempfile.NamedTemporaryFile(
+                mode="w", suffix=".txt", delete=False, encoding="utf-8"
+            )
             tmp.write(receipt_text)
             tmp.close()
             if sys.platform.startswith("win"):
@@ -940,8 +1240,11 @@ class CashierView(tk.Toplevel):
     def _save_receipt_dialog(self, receipt_text: str):
         default_name = f"receipt_{self.last_sale_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
         filepath = filedialog.asksaveasfilename(
-            defaultextension=".txt", filetypes=[("Text files", "*.txt"), ("All files", "*.*")],
-            initialfile=default_name, title="Save Receipt")
+            defaultextension=".txt",
+            filetypes=[("Text files", "*.txt"), ("All files", "*.*")],
+            initialfile=default_name,
+            title="Save Receipt",
+        )
         if filepath:
             try:
                 with open(filepath, "w", encoding="utf-8") as f:
@@ -982,16 +1285,24 @@ class CashierView(tk.Toplevel):
                 return
             try:
                 from modules.customers import get_customer_by_phone
+
                 customer = get_customer_by_phone(phone)
                 if customer:
                     self.current_customer_id = customer["customer_id"]
                     self.current_customer_name = customer["full_name"]
                     pts = customer.get("loyalty_points", 0)
-                    self.customer_label.config(text=f"Customer: {customer['full_name']} ({pts} pts)")
-                    self._pay_msg(f"Customer: {customer['full_name']} | {pts} loyalty pts", error=False)
+                    self.customer_label.config(
+                        text=f"Customer: {customer['full_name']} ({pts} pts)"
+                    )
+                    self._pay_msg(
+                        f"Customer: {customer['full_name']} | {pts} loyalty pts",
+                        error=False,
+                    )
                     dialog.destroy()
                 else:
-                    if messagebox.askyesno("New Customer", "Customer not found. Create new?"):
+                    if messagebox.askyesno(
+                        "New Customer", "Customer not found. Create new?"
+                    ):
                         self._create_customer_dialog(phone)
                         dialog.destroy()
             except Exception as e:
@@ -1008,11 +1319,17 @@ class CashierView(tk.Toplevel):
         dialog.transient(self)
         dialog.grab_set()
 
-        fields = [("Full Name:", "name"), ("Phone:", "phone"),
-                  ("Email:", "email"), ("Address:", "address")]
+        fields = [
+            ("Full Name:", "name"),
+            ("Phone:", "phone"),
+            ("Email:", "email"),
+            ("Address:", "address"),
+        ]
         entries = {}
         for i, (label, attr) in enumerate(fields):
-            tk.Label(dialog, text=label).grid(row=i, column=0, sticky="w", padx=5, pady=5)
+            tk.Label(dialog, text=label).grid(
+                row=i, column=0, sticky="w", padx=5, pady=5
+            )
             entry = tk.Entry(dialog, width=30)
             entry.grid(row=i, column=1, padx=5, pady=5)
             if attr == "phone" and phone:
@@ -1022,9 +1339,13 @@ class CashierView(tk.Toplevel):
         def save_customer():
             try:
                 from modules.customers import add_customer
+
                 success, msg = add_customer(
-                    full_name=entries["name"].get(), phone=entries["phone"].get(),
-                    email=entries["email"].get(), address=entries["address"].get())
+                    full_name=entries["name"].get(),
+                    phone=entries["phone"].get(),
+                    email=entries["email"].get(),
+                    address=entries["address"].get(),
+                )
                 if success:
                     messagebox.showinfo("Success", msg)
                     dialog.destroy()
@@ -1035,7 +1356,8 @@ class CashierView(tk.Toplevel):
                 messagebox.showerror("Error", f"Error creating customer: {e}")
 
         tk.Button(dialog, text="Save", command=save_customer).grid(
-            row=4, column=0, columnspan=2, pady=10)
+            row=4, column=0, columnspan=2, pady=10
+        )
 
     def _barcode_dialog(self):
         dialog = tk.Toplevel(self)
